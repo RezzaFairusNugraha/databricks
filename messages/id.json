@@ -1,0 +1,133 @@
+{
+  "common": {
+    "appName": "CSV Tidy",
+    "appTagline": "Pembersihan Data Skala Besar Berbasis Databricks",
+    "loading": "Memuat...",
+    "save": "Simpan",
+    "cancel": "Batal",
+    "delete": "Hapus",
+    "refresh": "Segarkan",
+    "copied": "Disalin!",
+    "copy": "Salin",
+    "status": "Status",
+    "actions": "Aksi",
+    "success": "Berhasil",
+    "error": "Terjadi Kesalahan",
+    "connected": "Terhubung",
+    "disconnected": "Terputus",
+    "checking": "Memeriksa...",
+    "retry": "Coba Lagi"
+  },
+  "nav": {
+    "dashboard": "Dasbor",
+    "newImport": "Impor Baru",
+    "history": "Riwayat",
+    "settings": "Pengaturan",
+    "documentation": "Dokumentasi"
+  },
+  "dashboard": {
+    "title": "Dasbor Ikhtisar",
+    "subtitle": "Pantau status pipeline data, volume Databricks, dan impor terkini.",
+    "stats": {
+      "totalUploads": "Total Berkas Diimpor",
+      "totalUploadsDesc": "Berkas masuk ke Databricks Volume",
+      "activeWarehouse": "SQL Warehouse",
+      "activeWarehouseDesc": "Status komputasi analitik",
+      "storageUsed": "Target Volume",
+      "storageUsedDesc": "Unity Catalog Volume aktif",
+      "avgLatency": "Latensi Koneksi",
+      "avgLatencyDesc": "Kecepatan respons API Databricks"
+    },
+    "quickActions": "Aksi Cepat",
+    "startImport": "Mulai Impor CSV",
+    "startImportDesc": "Unggah langsung streaming ke Unity Catalog Volume",
+    "checkSettings": "Cek Konfigurasi",
+    "checkSettingsDesc": "Verifikasi koneksi Databricks dan izin SQL",
+    "recentUploads": "Impor Berkas Terkini",
+    "recentUploadsDesc": "Daftar berkas yang diunggah dan siap dibersihkan.",
+    "noUploads": "Belum ada riwayat impor berkas. Mulai dengan mengunggah CSV pertama Anda!"
+  },
+  "import": {
+    "title": "Impor Berkas CSV",
+    "subtitle": "Streaming berkas langsung ke Databricks Unity Catalog Volume tanpa membebani memori server.",
+    "dropzoneTitle": "Tarik & Lepas Berkas CSV ke Sini",
+    "dropzoneSubtitle": "atau klik untuk memilih dari komputer Anda",
+    "dropzoneHint": "Mendukung format .csv, .tsv, dan .txt hingga {maxSize}MB.",
+    "destinationSettings": "Tujuan Unity Catalog",
+    "catalog": "Katalog",
+    "schema": "Skema",
+    "volume": "Volume",
+    "selectCatalog": "Pilih Katalog",
+    "selectSchema": "Pilih Skema",
+    "selectVolume": "Pilih Volume",
+    "uploading": "Mengunggah dan streaming ke Databricks Volume...",
+    "uploadProgress": "Progres Streaming",
+    "uploadSuccess": "Berkas Berhasil Dialirkan ke Databricks Volume!",
+    "jobIdLabel": "ID Pekerjaan (Job ID)",
+    "filePathLabel": "Lokasi Berkas di Volume",
+    "fileSizeLabel": "Ukuran Berkas",
+    "uploadedAtLabel": "Waktu Unggah",
+    "uploadAnother": "Unggah Berkas Lain",
+    "goToHistory": "Lihat di Riwayat",
+    "fileSizeExceeded": "Ukuran berkas ({size}MB) melebihi batas maksimum {maxSize}MB.",
+    "invalidFileType": "Tipe berkas tidak didukung. Harap unggah berkas CSV, TSV, atau TXT.",
+    "uploadError": "Gagal mengunggah berkas ke Databricks."
+  },
+  "history": {
+    "title": "Riwayat Pekerjaan",
+    "subtitle": "Daftar seluruh pekerjaan impor streaming dan pembersihan CSV.",
+    "table": {
+      "jobId": "Job ID",
+      "fileName": "Nama Berkas",
+      "fileSize": "Ukuran",
+      "volumePath": "Jalur Volume",
+      "status": "Status",
+      "createdAt": "Tanggal & Waktu",
+      "actions": "Aksi"
+    },
+    "noJobs": "Belum ada riwayat pekerjaan.",
+    "filterPlaceholder": "Cari berdasarkan nama berkas atau Job ID..."
+  },
+  "settings": {
+    "title": "Pengaturan Sistem",
+    "subtitle": "Kelola koneksi Databricks, preferensi antarmuka, dan tampilan tema.",
+    "databricksCard": {
+      "title": "Koneksi Databricks Unity Catalog",
+      "description": "Konfigurasi diambil dari server-side environment variables untuk keamanan penuh.",
+      "host": "Databricks Host",
+      "warehouseId": "SQL Warehouse ID",
+      "authMode": "Metode Autentikasi",
+      "authPat": "Personal Access Token (PAT)",
+      "authM2M": "OAuth M2M (Service Principal)",
+      "defaultVolume": "Jalur Volume Utama",
+      "testButton": "Uji Koneksi",
+      "testing": "Menguji Koneksi...",
+      "testSuccess": "Koneksi ke Databricks berhasil terverifikasi!",
+      "testFailed": "Gagal terhubung ke Databricks.",
+      "latency": "Latensi Respons",
+      "warehouseStatus": "Status Warehouse",
+      "diagnostics": "Hasil Diagnostik"
+    },
+    "themeCard": {
+      "title": "Personalisasi Tampilan",
+      "description": "Sesuaikan warna aksen, kelengkungan sudut (radius), jenis font, dan mode tema.",
+      "accentColor": "Warna Aksen",
+      "radius": "Kelengkungan Sudut",
+      "font": "Jenis Huruf",
+      "themeMode": "Mode Tampilan",
+      "light": "Terang",
+      "dark": "Gelap",
+      "system": "Sistem",
+      "radiusSharp": "Tajam (4px)",
+      "radiusSubtle": "Standar (8px)",
+      "radiusSoft": "Lembut (12px)",
+      "radiusRound": "Modern (16px)"
+    },
+    "languageCard": {
+      "title": "Pilihan Bahasa",
+      "description": "Ganti bahasa antarmuka aplikasi.",
+      "indonesian": "Bahasa Indonesia (Utama)",
+      "english": "English (Sekunder)"
+    }
+  }
+}

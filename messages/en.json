@@ -1,0 +1,133 @@
+{
+  "common": {
+    "appName": "CSV Tidy",
+    "appTagline": "Databricks-Powered Large-Scale Data Preparation",
+    "loading": "Loading...",
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "refresh": "Refresh",
+    "copied": "Copied!",
+    "copy": "Copy",
+    "status": "Status",
+    "actions": "Actions",
+    "success": "Success",
+    "error": "Error",
+    "connected": "Connected",
+    "disconnected": "Disconnected",
+    "checking": "Checking...",
+    "retry": "Retry"
+  },
+  "nav": {
+    "dashboard": "Dashboard",
+    "newImport": "New Import",
+    "history": "History",
+    "settings": "Settings",
+    "documentation": "Documentation"
+  },
+  "dashboard": {
+    "title": "Overview Dashboard",
+    "subtitle": "Monitor your data pipeline status, Databricks volumes, and recent imports.",
+    "stats": {
+      "totalUploads": "Total Files Imported",
+      "totalUploadsDesc": "Files streamed to Databricks Volume",
+      "activeWarehouse": "SQL Warehouse",
+      "activeWarehouseDesc": "Analytics compute status",
+      "storageUsed": "Target Volume",
+      "storageUsedDesc": "Active Unity Catalog Volume",
+      "avgLatency": "Connection Latency",
+      "avgLatencyDesc": "Databricks API response roundtrip"
+    },
+    "quickActions": "Quick Actions",
+    "startImport": "Start CSV Import",
+    "startImportDesc": "Stream directly to Unity Catalog Volume without memory spikes",
+    "checkSettings": "Check Configuration",
+    "checkSettingsDesc": "Verify Databricks connection and SQL permissions",
+    "recentUploads": "Recent Uploads",
+    "recentUploadsDesc": "List of streamed files ready for tidy transformations.",
+    "noUploads": "No import history yet. Get started by uploading your first CSV file!"
+  },
+  "import": {
+    "title": "Import CSV File",
+    "subtitle": "Stream files directly to Databricks Unity Catalog Volume without loading into server memory.",
+    "dropzoneTitle": "Drag & Drop CSV File Here",
+    "dropzoneSubtitle": "or click to browse from your computer",
+    "dropzoneHint": "Supports .csv, .tsv, and .txt up to {maxSize}MB.",
+    "destinationSettings": "Unity Catalog Destination",
+    "catalog": "Catalog",
+    "schema": "Schema",
+    "volume": "Volume",
+    "selectCatalog": "Select Catalog",
+    "selectSchema": "Select Schema",
+    "selectVolume": "Select Volume",
+    "uploading": "Uploading and streaming to Databricks Volume...",
+    "uploadProgress": "Streaming Progress",
+    "uploadSuccess": "File Successfully Streamed to Databricks Volume!",
+    "jobIdLabel": "Job ID",
+    "filePathLabel": "Volume File Location",
+    "fileSizeLabel": "File Size",
+    "uploadedAtLabel": "Uploaded At",
+    "uploadAnother": "Upload Another File",
+    "goToHistory": "View in History",
+    "fileSizeExceeded": "File size ({size}MB) exceeds the maximum allowed limit of {maxSize}MB.",
+    "invalidFileType": "Unsupported file type. Please upload a CSV, TSV, or TXT file.",
+    "uploadError": "Failed to upload file to Databricks."
+  },
+  "history": {
+    "title": "Job History",
+    "subtitle": "Record of all streamed import and CSV tidy jobs.",
+    "table": {
+      "jobId": "Job ID",
+      "fileName": "File Name",
+      "fileSize": "Size",
+      "volumePath": "Volume Path",
+      "status": "Status",
+      "createdAt": "Timestamp",
+      "actions": "Actions"
+    },
+    "noJobs": "No jobs found.",
+    "filterPlaceholder": "Filter by file name or Job ID..."
+  },
+  "settings": {
+    "title": "System Settings",
+    "subtitle": "Manage Databricks connectivity, UI preferences, and theme styling.",
+    "databricksCard": {
+      "title": "Databricks Unity Catalog Connection",
+      "description": "Configuration is loaded securely from server-side environment variables.",
+      "host": "Databricks Host",
+      "warehouseId": "SQL Warehouse ID",
+      "authMode": "Authentication Mode",
+      "authPat": "Personal Access Token (PAT)",
+      "authM2M": "OAuth M2M (Service Principal)",
+      "defaultVolume": "Default Volume Path",
+      "testButton": "Test Connection",
+      "testing": "Testing Connection...",
+      "testSuccess": "Successfully connected to Databricks!",
+      "testFailed": "Failed to connect to Databricks.",
+      "latency": "Response Latency",
+      "warehouseStatus": "Warehouse Status",
+      "diagnostics": "Diagnostic Output"
+    },
+    "themeCard": {
+      "title": "Appearance & Theme",
+      "description": "Customize accent color, border radius, font family, and theme mode.",
+      "accentColor": "Accent Color",
+      "radius": "Border Radius",
+      "font": "Font Family",
+      "themeMode": "Theme Mode",
+      "light": "Light",
+      "dark": "Dark",
+      "system": "System",
+      "radiusSharp": "Sharp (4px)",
+      "radiusSubtle": "Subtle (8px)",
+      "radiusSoft": "Soft (12px)",
+      "radiusRound": "Modern (16px)"
+    },
+    "languageCard": {
+      "title": "Language Selection",
+      "description": "Change application UI language.",
+      "indonesian": "Bahasa Indonesia (Default)",
+      "english": "English (Secondary)"
+    }
+  }
+}
