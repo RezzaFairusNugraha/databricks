@@ -1,17 +1,20 @@
 # ==============================================================================
-# CSV Tidy - Production Dockerfile (Standard Node.js Server, Non-Serverless)
-# Designed for large-scale streaming uploads directly to Databricks Unity Catalog
+# CSV Tidy - Production Dockerfile (Next.js 15 Standalone Server)
+# Multi-stage build optimized for Databricks CSV pipeline & persistent data
 # ==============================================================================
 
 # Stage 1: Base Image
 FROM node:22-alpine AS base
+RUN apk add --no-cache libc6-compat
 WORKDIR /app
-RUN corepack enable && corepack prepare pnpm@latest --activate
+ENV PNPM_HOME="/pnpm"
+ENV PATH="$PNPM_HOME:$PATH"
+RUN npm install -g pnpm@12.10.1
 
 # Stage 2: Dependencies
 FROM base AS deps
 WORKDIR /app
-COPY package.json pnpm-lock.yaml* .npmrc* pnpm-workspace.yaml* ./
+COPY package.json pnpm-lock.yaml* .npmrc* ./
 RUN pnpm install --frozen-lockfile || pnpm install
 
 # Stage 3: Builder
@@ -22,11 +25,12 @@ COPY . .
 
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV NODE_ENV=production
+ENV DOCKER_BUILD=1
+ENV STANDALONE=true
 
-# Build standalone Next.js bundle
 RUN pnpm build
 
-# Stage 4: Production Runner (Lightweight Node.js Server)
+# Stage 4: Production Runner
 FROM node:22-alpine AS runner
 WORKDIR /app
 
@@ -36,23 +40,25 @@ ENV HOSTNAME="0.0.0.0"
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV NODE_OPTIONS="--max-old-space-size=4096"
 
-# Create non-root user for security
 RUN addgroup --system --gid 1001 nodejs && \
     adduser --system --uid 1001 nextjs
 
-# Copy standalone build and static assets
+# Copy static assets and sample files
 COPY --from=builder /app/public ./public
+COPY --from=builder --chown=nextjs:nodejs /app/samples ./samples
+
+# Copy standalone Next.js server & static chunks
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 
-# Persistent data directory for local job records
+# Persistent data directory for SQLite & jobs history
 RUN mkdir -p /app/.data && chown -R nextjs:nodejs /app/.data
 
 USER nextjs
 
 EXPOSE 3000
 
-HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
-  CMD wget --no-verbose --tries=1 --spider http://localhost:3000/ || exit 1
+HEALTHCHECK --interval=30s --timeout=5s --start-period=15s --retries=3 \
+  CMD wget --no-verbose --tries=1 --spider http://127.0.0.1:3000/ || exit 1
 
 CMD ["node", "server.js"]

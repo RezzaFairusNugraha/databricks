@@ -3,7 +3,9 @@ node_modules
 .git
 .gitignore
 .env*.local
-.npmrc
+.data
+*.sqlite
+*.log
 README.md
 Dockerfile
 .dockerignore

@@ -1,0 +1,26 @@
+services:
+  csv-tidy:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: csv-tidy:latest
+    container_name: csv-tidy-app
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      - HOSTNAME=0.0.0.0
+      - DATABRICKS_HOST=${DATABRICKS_HOST:-}
+      - DATABRICKS_WAREHOUSE_ID=${DATABRICKS_WAREHOUSE_ID:-}
+      - DATABRICKS_TOKEN=${DATABRICKS_TOKEN:-}
+      - DATABRICKS_CATALOG=${DATABRICKS_CATALOG:-main}
+      - DATABRICKS_SCHEMA=${DATABRICKS_SCHEMA:-csv_tidy}
+      - DATABRICKS_VOLUME=${DATABRICKS_VOLUME:-raw_uploads}
+    volumes:
+      - csv_tidy_data:/app/.data
+
+volumes:
+  csv_tidy_data:
+    driver: local
