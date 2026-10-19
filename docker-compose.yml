@@ -12,15 +12,12 @@ services:
       - NODE_ENV=production
       - PORT=3000
       - HOSTNAME=0.0.0.0
-      - DATABRICKS_HOST=${DATABRICKS_HOST:-}
-      - DATABRICKS_WAREHOUSE_ID=${DATABRICKS_WAREHOUSE_ID:-}
-      - DATABRICKS_TOKEN=${DATABRICKS_TOKEN:-}
-      - DATABRICKS_CATALOG=${DATABRICKS_CATALOG:-main}
-      - DATABRICKS_SCHEMA=${DATABRICKS_SCHEMA:-csv_tidy}
-      - DATABRICKS_VOLUME=${DATABRICKS_VOLUME:-raw_uploads}
     volumes:
-      - csv_tidy_data:/app/.data
+      - csv_tidy_settings:/app/data
+      - csv_tidy_jobs:/app/.data
 
 volumes:
-  csv_tidy_data:
+  csv_tidy_settings:
+    driver: local
+  csv_tidy_jobs:
     driver: local
