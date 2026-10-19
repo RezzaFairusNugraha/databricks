@@ -70,26 +70,26 @@ export function LoadExecutionModal({
           </div>
           <DialogTitle className="text-base font-semibold text-zinc-900">
             {status === "succeeded"
-              ? "Pemuatan ke Databricks Berhasil"
+              ? "Pemuatan Berhasil"
               : status === "failed"
               ? "Gagal Memuat ke Databricks"
-              : "Memproses Pemuatan Data..."}
+              : "Memproses Data..."}
           </DialogTitle>
           <DialogDescription className="text-xs text-zinc-500">
-            Target: <code className="font-mono text-indigo-600 font-semibold">{targetCatalog}.{targetSchema}.{targetTable}</code> ({writeMode.toUpperCase()})
+            Target: <code className="font-mono text-zinc-800">{targetCatalog}.{targetSchema}.{targetTable}</code> ({writeMode.toUpperCase()})
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-5 pt-2">
           <div className="space-y-1.5">
             <div className="flex justify-between text-xs text-zinc-500">
-              <span>Status Pemuatan</span>
-              <span className="font-mono font-semibold text-zinc-900">{progressPercent}%</span>
+              <span>Kemajuan</span>
+              <span className="font-mono text-zinc-900">{progressPercent}%</span>
             </div>
-            <Progress value={progressPercent} className="h-2" />
+            <Progress value={progressPercent} className="h-1.5" />
           </div>
 
-          <div className="space-y-3 rounded-xl border border-zinc-200 bg-zinc-50/50 p-4">
+          <div className="space-y-3 rounded-lg border border-zinc-200 bg-zinc-50/50 p-4">
             {timeline.map((step) => {
               const isStepDone = step.status === "succeeded";
               const isStepRunning = step.status === "running";
@@ -119,12 +119,12 @@ export function LoadExecutionModal({
                     </span>
                   </div>
                   {isStepDone && (
-                    <Badge variant="success" className="text-[10px]">
+                    <Badge variant="success" className="text-xs">
                       Selesai
                     </Badge>
                   )}
                   {isStepRunning && (
-                    <Badge variant="outline" className="text-[10px] border-indigo-200 text-indigo-600">
+                    <Badge variant="outline" className="text-xs border-indigo-200 text-indigo-600">
                       Berjalan...
                     </Badge>
                   )}
@@ -136,23 +136,23 @@ export function LoadExecutionModal({
           {status === "succeeded" && (
             <div className="space-y-4 pt-1">
               <div className="grid grid-cols-2 gap-3">
-                <div className="p-3 rounded-xl border border-emerald-200 bg-emerald-50/20">
+                <div className="p-3 rounded-lg border border-zinc-200 bg-white">
                   <div className="text-xs text-zinc-500 flex items-center gap-1.5">
-                    <Sparkles className="h-3.5 w-3.5 text-emerald-600" />
-                    Baris Bersih Masuk
+                    <Sparkles className="h-3.5 w-3.5 text-indigo-600" />
+                    Baris Bersih
                   </div>
-                  <div className="text-xl font-bold font-mono text-emerald-700 mt-1">
-                    {rowsClean.toLocaleString()}
+                  <div className="text-xl font-semibold font-mono text-zinc-900 mt-1">
+                    {rowsClean.toLocaleString("id-ID")}
                   </div>
                 </div>
 
-                <div className="p-3 rounded-xl border border-rose-200 bg-rose-50/20">
+                <div className="p-3 rounded-lg border border-zinc-200 bg-white">
                   <div className="text-xs text-zinc-500 flex items-center gap-1.5">
-                    <ShieldAlert className="h-3.5 w-3.5 text-rose-600" />
+                    <ShieldAlert className="h-3.5 w-3.5 text-amber-600" />
                     Baris Karantina
                   </div>
-                  <div className="text-xl font-bold font-mono text-rose-700 mt-1">
-                    {rowsQuarantine.toLocaleString()}
+                  <div className="text-xl font-semibold font-mono text-zinc-900 mt-1">
+                    {rowsQuarantine.toLocaleString("id-ID")}
                   </div>
                 </div>
               </div>
@@ -161,7 +161,7 @@ export function LoadExecutionModal({
                 {tableUrl && (
                   <Button
                     variant="outline"
-                    className="w-full text-xs justify-between border-indigo-200 hover:bg-indigo-50 text-indigo-600"
+                    className="w-full text-xs justify-between"
                     onClick={() => window.open(tableUrl, "_blank")}
                   >
                     <span className="flex items-center gap-2">
@@ -179,7 +179,7 @@ export function LoadExecutionModal({
                     onClick={() => window.open(quarantineTableUrl, "_blank")}
                   >
                     <span className="flex items-center gap-2">
-                      <ShieldAlert className="h-4 w-4 text-rose-600" />
+                      <ShieldAlert className="h-4 w-4 text-amber-600" />
                       Buka Tabel Karantina di Databricks
                     </span>
                     <ExternalLink className="h-3.5 w-3.5" />
@@ -190,11 +190,11 @@ export function LoadExecutionModal({
           )}
 
           {status === "failed" && (
-            <div className="p-3 rounded-xl border border-rose-200 bg-rose-50 text-rose-700 text-xs space-y-1 flex items-start gap-2">
-              <AlertCircle className="h-4 w-4 shrink-0 mt-0.5" />
+            <div className="p-3.5 rounded-lg border border-rose-200 bg-rose-50/50 text-rose-800 text-xs space-y-1 flex items-start gap-2.5">
+              <AlertCircle className="h-4 w-4 shrink-0 text-rose-600 mt-0.5" />
               <div>
-                <p className="font-semibold">Kesalahan Eksekusi Databricks:</p>
-                <p className="font-mono text-[11px] leading-relaxed">
+                <p className="font-semibold text-rose-900">Kesalahan Eksekusi Databricks:</p>
+                <p className="font-mono text-xs text-rose-700 leading-relaxed mt-0.5">
                   {errorMessage || "Pemuatan query gagal dieksekusi di SQL Warehouse."}
                 </p>
               </div>
@@ -203,7 +203,7 @@ export function LoadExecutionModal({
 
           <div className="flex justify-end pt-2">
             <Button
-              variant={status === "succeeded" ? "default" : "outline"}
+              variant={status === "succeeded" ? "default" : "secondary"}
               size="sm"
               onClick={onClose}
               disabled={status === "running"}

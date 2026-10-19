@@ -8,10 +8,11 @@ import {
   History,
   BookOpen,
   Settings,
-  Sparkles,
   X,
 } from "lucide-react";
 import { useUiStore } from "@/lib/stores/ui-store";
+import { StatusDot, StatusType } from "@/components/ui/status-dot";
+import { cn } from "@/lib/utils";
 
 interface NavItem {
   href: string;
@@ -50,7 +51,7 @@ const navItems: NavItem[] = [
 export function Sidebar() {
   const pathname = usePathname();
   const { isMobileSidebarOpen, setMobileSidebarOpen } = useUiStore();
-  const [status, setStatus] = React.useState<"connected" | "unconfigured" | "error">("unconfigured");
+  const [status, setStatus] = React.useState<StatusType>("unconfigured");
 
   const checkStatus = React.useCallback(async () => {
     try {
@@ -93,26 +94,26 @@ export function Sidebar() {
   const content = (
     <div className="flex h-full flex-col justify-between p-4">
       <div className="space-y-6">
-        <div className="flex items-center justify-between px-2">
-          <Link href="/" className="flex items-center gap-2.5">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-indigo-600 text-white">
-              <Sparkles className="h-4 w-4" />
-            </div>
-            <div className="flex flex-col">
-              <span className="text-sm font-semibold text-zinc-900 tracking-tight">CSV Tidy</span>
-              <span className="text-[10px] text-zinc-500 font-medium">Databricks Studio</span>
-            </div>
+        <div className="flex items-center justify-between px-2 pt-1">
+          <Link href="/" className="flex items-center gap-2">
+            <span className="text-sm font-semibold tracking-tight text-zinc-900">
+              CSV Tidy
+            </span>
+            <span className="text-xs text-zinc-500 font-normal">
+              Databricks
+            </span>
           </Link>
           <button
             type="button"
             onClick={() => setMobileSidebarOpen(false)}
-            className="md:hidden text-zinc-500 hover:text-zinc-900 p-1"
+            className="md:hidden text-zinc-500 hover:text-zinc-900 p-1 rounded-md"
+            aria-label="Tutup menu"
           >
-            <X className="h-5 w-5" />
+            <X className="h-4 w-4" />
           </button>
         </div>
 
-        <nav className="space-y-1">
+        <nav className="space-y-0.5">
           {navItems.map((item) => {
             const Icon = item.icon;
             const isActive = item.match(pathname);
@@ -121,13 +122,19 @@ export function Sidebar() {
                 key={item.href}
                 href={item.href}
                 onClick={() => setMobileSidebarOpen(false)}
-                className={`flex items-center gap-3 rounded-xl px-3 py-2 text-xs font-medium transition-colors ${
+                className={cn(
+                  "flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-sm transition-colors duration-150",
                   isActive
-                    ? "bg-indigo-50 text-indigo-600 font-semibold"
-                    : "text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900"
-                }`}
+                    ? "bg-zinc-100 text-indigo-600 font-medium"
+                    : "text-zinc-600 hover:bg-zinc-50 hover:text-zinc-900 font-normal"
+                )}
               >
-                <Icon className={`h-4 w-4 ${isActive ? "text-indigo-600" : "text-zinc-400"}`} />
+                <Icon
+                  className={cn(
+                    "h-4 w-4 shrink-0 transition-colors",
+                    isActive ? "text-indigo-600" : "text-zinc-500"
+                  )}
+                />
                 <span>{item.label}</span>
               </Link>
             );
@@ -135,27 +142,21 @@ export function Sidebar() {
         </nav>
       </div>
 
-      <div className="border-t border-zinc-200/80 pt-4 px-2">
+      <div className="border-t border-zinc-200 pt-3 px-1">
         <Link
           href="/settings"
-          className="flex items-center gap-2.5 text-xs text-zinc-600 hover:text-zinc-900 transition-colors"
+          className="flex items-center justify-between w-full rounded-lg px-2 py-2 hover:bg-zinc-50 transition-colors duration-150"
         >
-          <span
-            className={`h-2 w-2 rounded-full ${
+          <StatusDot
+            status={status}
+            label={
               status === "connected"
-                ? "bg-emerald-500"
+                ? "Databricks Terhubung"
                 : status === "unconfigured"
-                ? "bg-zinc-400"
-                : "bg-rose-500"
-            }`}
+                ? "Belum Dikonfigurasi"
+                : "Koneksi Bermasalah"
+            }
           />
-          <span className="text-[11px] font-medium truncate">
-            {status === "connected"
-              ? "Databricks Terhubung"
-              : status === "unconfigured"
-              ? "Belum Dikonfigurasi"
-              : "Koneksi Bermasalah"}
-          </span>
         </Link>
       </div>
     </div>
@@ -163,14 +164,14 @@ export function Sidebar() {
 
   return (
     <>
-      <aside className="hidden md:flex w-56 shrink-0 flex-col border-r border-zinc-200 bg-white h-screen sticky top-0">
+      <aside className="hidden md:flex w-[232px] shrink-0 flex-col border-r border-zinc-200 bg-white h-screen sticky top-0">
         {content}
       </aside>
 
       {isMobileSidebarOpen && (
         <div className="fixed inset-0 z-50 md:hidden flex">
           <div
-            className="fixed inset-0 bg-black/30 backdrop-blur-xs"
+            className="fixed inset-0 bg-black/20 backdrop-blur-xs transition-opacity"
             onClick={() => setMobileSidebarOpen(false)}
           />
           <div className="relative w-64 bg-white shadow-xl h-full flex flex-col z-10">

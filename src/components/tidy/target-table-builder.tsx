@@ -335,7 +335,7 @@ export function TargetTableBuilder({
                           }
                         }}
                       >
-                        {col.name} {isKey && "✓"}
+                        {col.name}
                       </Badge>
                     );
                   })}
@@ -592,7 +592,7 @@ export function TargetTableBuilder({
                         <Button
                           variant="ghost"
                           size="sm"
-                          className="h-7 px-2 text-[11px] text-indigo-600 bg-indigo-50 hover:bg-indigo-100 gap-1"
+                          className="h-7 px-2 text-xs text-indigo-600 bg-indigo-50 hover:bg-indigo-100 gap-1"
                           onClick={() =>
                             updateMappingForColumn(col.name, {
                               type: "csv_column",
@@ -694,7 +694,7 @@ export function TargetTableBuilder({
                               <Badge
                                 key={src}
                                 variant={isSelected ? "default" : "outline"}
-                                className="cursor-pointer text-[10px] font-mono"
+                                className="cursor-pointer text-xs font-mono"
                                 onClick={() => {
                                   const newCols = isSelected
                                     ? mergeM.sourceColumns.filter((c) => c !== src)
@@ -706,7 +706,7 @@ export function TargetTableBuilder({
                                   });
                                 }}
                               >
-                                {src} {isSelected && "✓"}
+                                {src}
                               </Badge>
                             );
                           })}
@@ -737,7 +737,7 @@ export function TargetTableBuilder({
                   {isUnmappedRequired && (
                     <Badge
                       variant="destructive"
-                      className="ml-auto text-[11px] font-normal gap-1 bg-amber-100 text-amber-800 border-amber-200"
+                      className="ml-auto text-xs font-normal gap-1 bg-amber-100 text-amber-800 border-amber-200"
                     >
                       <AlertTriangle className="h-3 w-3" />
                       Kolom wajib ini belum dipetakan!

@@ -9,8 +9,6 @@ import {
   ColumnDef,
 } from "@tanstack/react-table";
 import {
-  Settings2,
-  Sparkles,
   RefreshCw,
   Code2,
   Copy,
@@ -18,13 +16,11 @@ import {
   AlertTriangle,
   TableProperties,
   Filter,
-  Zap,
-  Layers,
   ArrowRight,
-  Database,
 } from "lucide-react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { PageHeader } from "@/components/ui/page-header";
 import {
   Dialog,
   DialogContent,
@@ -32,7 +28,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import {
   CsvSniffResult,
@@ -526,7 +522,7 @@ export default function TidyPage() {
             >
               {colConfig.rawHeader}
             </span>
-            <span className="text-[10px] text-zinc-400 font-mono">
+            <span className="text-xs text-zinc-400 font-mono">
               #{colConfig.columnIndex}
             </span>
           </div>
@@ -541,7 +537,7 @@ export default function TidyPage() {
                 )
               );
             }}
-            className="h-6 w-full rounded-lg border border-zinc-200 bg-white px-1 font-mono text-[11px] font-medium text-zinc-900 focus:outline-none focus:ring-1 focus:ring-indigo-600 cursor-pointer"
+            className="h-7 w-full rounded-md border border-zinc-200 bg-white px-2 font-mono text-xs font-medium text-zinc-900 focus:outline-none focus:ring-1 focus:ring-indigo-600 cursor-pointer"
           >
             <option value="STRING">STRING</option>
             <option value="INT">INT</option>
@@ -563,12 +559,12 @@ export default function TidyPage() {
               );
             }}
             placeholder="normalisasi_nama"
-            className="h-6 w-full rounded-lg border border-zinc-200 bg-white px-1 font-mono text-[11px] text-zinc-700 focus:text-zinc-900 focus:outline-none focus:ring-1 focus:ring-indigo-600"
+            className="h-7 w-full rounded-md border border-zinc-200 bg-white px-2 font-mono text-xs text-zinc-700 focus:text-zinc-900 focus:outline-none focus:ring-1 focus:ring-indigo-600"
             title="Normalisasi nama kolom"
           />
 
           {colConfig.isAmbiguous && (
-            <div className="flex items-center gap-1 text-[10px] text-purple-700">
+            <div className="flex items-center gap-1 text-xs text-purple-700">
               <AlertTriangle className="h-3 w-3 shrink-0" />
               <span>Ambigu (DD/MM)</span>
             </div>
@@ -611,22 +607,18 @@ export default function TidyPage() {
     getCoreRowModel: getCoreRowModel(),
   });
 
-  return (
-    <div className="space-y-6">
-      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-        <div>
-          <div className="inline-flex items-center gap-2 rounded-full border border-indigo-200 bg-indigo-50 px-3 py-1 text-xs font-medium text-indigo-700 mb-2">
-            <Sparkles className="h-3.5 w-3.5" />
-            <span>Workspace Pembersihan CSV</span>
-          </div>
-          <h1 className="text-2xl font-semibold tracking-tight text-zinc-900">
-            Pembersihan & Validasi Berkas
-          </h1>
-          <p className="text-sm text-zinc-500 mt-1">
-            Profiling otomatis dari 64KB pertama berkas, pemetaan target tabel, dan eksekusi Spark SQL.
-          </p>
-        </div>
+  const steps = [
+    { id: "structure", label: "Struktur & Kolom", number: 1 },
+    { id: "target", label: "Tabel Target", number: 2 },
+    { id: "preview", label: "Pratinjau & Kirim", number: 3 },
+  ];
 
+  return (
+    <div className="max-w-5xl mx-auto space-y-8 animate-page-in">
+      <PageHeader
+        title="Pembersihan & Validasi"
+        description="Profiling otomatis berkas, penyesuaian skema, pemetaan target tabel, dan eksekusi Spark SQL."
+      >
         <div className="flex items-center gap-2">
           <Button
             variant="outline"
@@ -649,63 +641,92 @@ export default function TidyPage() {
             <span>Lihat Spark SQL</span>
           </Button>
         </div>
+      </PageHeader>
+
+      <div className="flex flex-wrap items-center justify-between gap-3 text-xs bg-zinc-50 border border-zinc-200 px-4 py-2.5 rounded-lg">
+        <span className="font-medium text-zinc-600">Contoh Berkas CSV:</span>
+        <div className="flex flex-wrap items-center gap-2">
+          {SAMPLES.map((s) => (
+            <button
+              key={s.id}
+              onClick={() => {
+                setSelectedSample(s.id);
+                setLoading(true);
+                window.location.href = `/tidy/${s.id}`;
+              }}
+              className={`px-2.5 py-1 rounded-md text-xs font-medium transition-colors ${
+                selectedSample === s.id
+                  ? "bg-indigo-600 text-white"
+                  : "bg-white border border-zinc-200 text-zinc-700 hover:bg-zinc-100"
+              }`}
+            >
+              {s.label}
+            </button>
+          ))}
+        </div>
       </div>
 
-      <Card className="border-indigo-100 bg-indigo-50/30">
-        <CardContent className="p-4">
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <span className="text-xs font-semibold text-indigo-700 uppercase tracking-wider flex items-center gap-1.5">
-              <Zap className="h-4 w-4 text-indigo-600" />
-              Contoh Berkas CSV Bermasalah:
-            </span>
-            <div className="flex flex-wrap items-center gap-2">
-              {SAMPLES.map((s) => (
+      <div className="py-2">
+        <div className="flex items-center justify-between max-w-2xl mx-auto">
+          {steps.map((step, idx) => {
+            const isCompleted =
+              (step.id === "structure" && (activeStepTab === "target" || activeStepTab === "preview")) ||
+              (step.id === "target" && activeStepTab === "preview");
+            const isCurrent = activeStepTab === step.id;
+
+            return (
+              <React.Fragment key={step.id}>
+                {idx > 0 && (
+                  <div
+                    className={`flex-1 h-px mx-4 transition-colors ${
+                      isCompleted || isCurrent ? "bg-indigo-600" : "bg-zinc-200"
+                    }`}
+                  />
+                )}
                 <button
-                  key={s.id}
-                  onClick={() => {
-                    setSelectedSample(s.id);
-                    setLoading(true);
-                    window.location.href = `/tidy/${s.id}`;
-                  }}
-                  className={`px-3 py-1.5 rounded-xl text-xs font-medium transition-all ${
-                    selectedSample === s.id
-                      ? "bg-indigo-600 text-white shadow-xs"
-                      : "bg-white border border-zinc-200 text-zinc-700 hover:bg-zinc-50"
-                  }`}
+                  type="button"
+                  onClick={() => setActiveStepTab(step.id)}
+                  className="flex items-center gap-2.5 text-left group focus:outline-none"
                 >
-                  {s.label}
+                  <span
+                    className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-semibold transition-colors ${
+                      isCompleted
+                        ? "bg-indigo-600 text-white"
+                        : isCurrent
+                        ? "border-2 border-indigo-600 text-indigo-600 bg-white"
+                        : "border border-zinc-300 text-zinc-500 bg-white group-hover:border-zinc-400"
+                    }`}
+                  >
+                    {isCompleted ? <Check className="w-4 h-4" /> : step.number}
+                  </span>
+                  <span
+                    className={`text-sm font-medium transition-colors ${
+                      isCurrent
+                        ? "text-zinc-900 font-semibold"
+                        : isCompleted
+                        ? "text-zinc-700"
+                        : "text-zinc-400 group-hover:text-zinc-600"
+                    }`}
+                  >
+                    {step.label}
+                  </span>
                 </button>
-              ))}
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+              </React.Fragment>
+            );
+          })}
+        </div>
+      </div>
 
       <Tabs
         value={activeStepTab}
         onValueChange={setActiveStepTab}
         className="space-y-6"
       >
-        <TabsList className="grid grid-cols-3 h-10 w-full bg-zinc-100 p-1">
-          <TabsTrigger value="structure" className="text-xs font-medium gap-1.5">
-            <Settings2 className="h-3.5 w-3.5" />
-            1. Struktur & Normalisasi Kolom
-          </TabsTrigger>
-          <TabsTrigger value="target" className="text-xs font-medium gap-1.5">
-            <Database className="h-3.5 w-3.5" />
-            2. Tabel Target & Pemetaan
-          </TabsTrigger>
-          <TabsTrigger value="preview" className="text-xs font-medium gap-1.5">
-            <Layers className="h-3.5 w-3.5" />
-            3. Pratinjau Bersih & Eksekusi
-          </TabsTrigger>
-        </TabsList>
-
         <TabsContent value="structure" className="space-y-6 m-0">
           {detectResult && (
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-3">
-              <div className="rounded-xl border border-zinc-200 bg-white p-3">
-                <span className="text-[11px] text-zinc-500">Pemisah Kolom</span>
+              <div className="rounded-lg border border-zinc-200 bg-white p-3 shadow-xs">
+                <span className="text-xs text-zinc-500">Pemisah Kolom</span>
                 <div className="mt-1 font-mono text-sm font-semibold text-zinc-900">
                   {delimiter === ";"
                     ? "Semicolon (;)"
@@ -715,36 +736,36 @@ export default function TidyPage() {
                 </div>
               </div>
 
-              <div className="rounded-xl border border-zinc-200 bg-white p-3">
-                <span className="text-[11px] text-zinc-500">Encoding</span>
+              <div className="rounded-lg border border-zinc-200 bg-white p-3 shadow-xs">
+                <span className="text-xs text-zinc-500">Encoding</span>
                 <div className="mt-1 font-mono text-sm font-semibold text-zinc-900">
                   {encoding}
                 </div>
               </div>
 
-              <div className="rounded-xl border border-zinc-200 bg-white p-3">
-                <span className="text-[11px] text-zinc-500">Baris Header</span>
+              <div className="rounded-lg border border-zinc-200 bg-white p-3 shadow-xs">
+                <span className="text-xs text-zinc-500">Baris Header</span>
                 <div className="mt-1 font-mono text-sm font-semibold text-zinc-900">
                   Baris #{headerRowIdx + 1}
                 </div>
               </div>
 
-              <div className="rounded-xl border border-zinc-200 bg-white p-3">
-                <span className="text-[11px] text-zinc-500">Jumlah Kolom</span>
+              <div className="rounded-lg border border-zinc-200 bg-white p-3 shadow-xs">
+                <span className="text-xs text-zinc-500">Jumlah Kolom</span>
                 <div className="mt-1 font-mono text-sm font-semibold text-zinc-900">
                   {detectResult.structure.rawHeaders.length} Kolom
                 </div>
               </div>
 
-              <div className="rounded-xl border border-zinc-200 bg-white p-3">
-                <span className="text-[11px] text-zinc-500">Baris Sampah</span>
+              <div className="rounded-lg border border-zinc-200 bg-white p-3 shadow-xs">
+                <span className="text-xs text-zinc-500">Baris Sampah</span>
                 <div className="mt-1 font-mono text-sm font-semibold text-zinc-900">
                   {detectResult.structure.junkRowIndices.length} Baris
                 </div>
               </div>
 
-              <div className="rounded-xl border border-zinc-200 bg-white p-3">
-                <span className="text-[11px] text-zinc-500">Total Akhir (Junk)</span>
+              <div className="rounded-lg border border-zinc-200 bg-white p-3 shadow-xs">
+                <span className="text-xs text-zinc-500">Total Akhir</span>
                 <div className="mt-1 font-mono text-sm font-semibold text-zinc-900">
                   {detectResult.structure.trailingTotalRowIndices.length} Baris
                 </div>
@@ -766,7 +787,7 @@ export default function TidyPage() {
                   <select
                     value={delimiter}
                     onChange={(e) => setDelimiter(e.target.value as DetectedDelimiter)}
-                    className="mt-1 h-9 w-full rounded-xl border border-zinc-200 bg-white px-3 text-xs font-mono font-medium text-zinc-900 focus:outline-none focus:ring-1 focus:ring-indigo-600"
+                    className="mt-1 h-10 w-full rounded-lg border border-zinc-200 bg-white px-3 text-xs font-mono font-medium text-zinc-900 focus:outline-none focus:ring-1 focus:ring-indigo-600"
                   >
                     <option value=",">Koma (,)</option>
                     <option value=";">Titik Koma (;)</option>
@@ -780,7 +801,7 @@ export default function TidyPage() {
                   <select
                     value={encoding}
                     onChange={(e) => setEncoding(e.target.value as DetectedEncoding)}
-                    className="mt-1 h-9 w-full rounded-xl border border-zinc-200 bg-white px-3 text-xs font-mono font-medium text-zinc-900 focus:outline-none focus:ring-1 focus:ring-indigo-600"
+                    className="mt-1 h-10 w-full rounded-lg border border-zinc-200 bg-white px-3 text-xs font-mono font-medium text-zinc-900 focus:outline-none focus:ring-1 focus:ring-indigo-600"
                   >
                     <option value="UTF-8">UTF-8</option>
                     <option value="ISO-8859-1">Latin-1 (ISO-8859-1)</option>
@@ -795,11 +816,11 @@ export default function TidyPage() {
                     min={0}
                     value={headerRowIdx}
                     onChange={(e) => setHeaderRowIdx(parseInt(e.target.value, 10) || 0)}
-                    className="mt-1 h-9 w-full rounded-xl border border-zinc-200 bg-white px-3 text-xs font-mono font-medium text-zinc-900 focus:outline-none focus:ring-1 focus:ring-indigo-600"
+                    className="mt-1 h-10 w-full rounded-lg border border-zinc-200 bg-white px-3 text-xs font-mono font-medium text-zinc-900 focus:outline-none focus:ring-1 focus:ring-indigo-600"
                   />
                 </div>
 
-                <div className="flex items-center gap-3 pb-2">
+                <div className="flex items-center gap-3 pb-2.5">
                   <label className="flex items-center gap-2 text-xs text-zinc-700 cursor-pointer">
                     <input
                       type="checkbox"
@@ -816,7 +837,7 @@ export default function TidyPage() {
                     onClick={handleApplyOverrides}
                     variant="outline"
                     size="sm"
-                    className="w-full h-9 text-xs gap-1.5"
+                    className="w-full h-10 text-xs gap-1.5"
                   >
                     <RefreshCw className="h-3.5 w-3.5" />
                     Terapkan Penyesuaian

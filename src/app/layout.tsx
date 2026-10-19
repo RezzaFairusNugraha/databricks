@@ -16,17 +16,17 @@ export default function RootLayout({
 }) {
   return (
     <html lang="id">
-      <body className="min-h-screen bg-[#fafafa] font-sans text-zinc-900 antialiased selection:bg-indigo-100 selection:text-indigo-700">
+      <body className="min-h-screen bg-[#fafaf9] font-sans text-zinc-900 antialiased selection:bg-indigo-100 selection:text-indigo-700">
         <div className="flex min-h-screen flex-col md:flex-row">
           <Sidebar />
           <div className="flex-1 flex flex-col min-w-0">
             <MobileNavToggle />
-            <main className="flex-1 max-w-5xl mx-auto w-full px-6 py-8">
+            <main className="flex-1 w-full px-6 py-8 md:py-10 animate-page-in">
               {children}
             </main>
           </div>
         </div>
-        <Toaster />
+        <Toaster position="bottom-right" />
       </body>
     </html>
   );

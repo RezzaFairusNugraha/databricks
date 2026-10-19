@@ -8,18 +8,19 @@ import {
   Copy,
   Check,
   ArrowRight,
-  Database,
   HardDrive,
   RefreshCw,
-  FolderOpen,
   Sparkles,
   FileSpreadsheet,
   AlertCircle,
   HelpCircle,
 } from "lucide-react";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
+import { PageHeader } from "@/components/ui/page-header";
+import { Section } from "@/components/ui/section";
+import { Field } from "@/components/ui/field";
 import { toast } from "sonner";
 
 interface DetectionResult {
@@ -123,7 +124,7 @@ export default function ImportPage() {
       toast.error("Format berkas tidak didukung. Harap unggah CSV, TSV, atau XLSX.");
       setErrorMessage({
         text: "Format berkas tidak didukung.",
-        suggestion: "Pilih berkas dengan ekstensi .csv, .tsv, atau .xlsx.",
+        suggestion: "Pilih berkas dengan format .csv, .tsv, atau .xlsx.",
       });
       return;
     }
@@ -133,7 +134,7 @@ export default function ImportPage() {
       toast.error(`Ukuran berkas (${sizeInMb.toFixed(1)} MB) melebihi batas maksimum ${maxSizeMb} MB.`);
       setErrorMessage({
         text: `Ukuran berkas (${sizeInMb.toFixed(1)} MB) melebihi batas maksimum.`,
-        suggestion: `Batas upload saat ini adalah ${maxSizeMb} MB. Perkecil ukuran berkas atau ubah konfigurasi pada halaman Pengaturan.`,
+        suggestion: `Batas upload adalah ${maxSizeMb} MB. Perkecil berkas atau ubah batas di Pengaturan.`,
       });
       return;
     }
@@ -240,7 +241,7 @@ export default function ImportPage() {
         const response: UploadResponse = JSON.parse(xhr.responseText);
         if (xhr.status >= 200 && xhr.status < 300 && response.success) {
           setUploadResult(response);
-          toast.success("Berkas berhasil dinormalisasi dan diunggah ke Unity Catalog Volume.");
+          toast.success("Berkas berhasil dinormalisasi dan diunggah.");
         } else {
           setErrorMessage({
             text: response.error || "Gagal memproses berkas.",
@@ -272,7 +273,7 @@ export default function ImportPage() {
   const copyToClipboard = (text: string, fieldId: string) => {
     navigator.clipboard.writeText(text);
     setCopiedField(fieldId);
-    toast.success("Tersalin ke clipboard!");
+    toast.success("Tersalin ke papan klip.");
     setTimeout(() => setCopiedField(null), 2000);
   };
 
@@ -300,115 +301,112 @@ export default function ImportPage() {
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight text-zinc-900">
-            Impor Berkas Data
-          </h1>
-          <p className="text-sm text-zinc-500 mt-1">
-            Normalisasi cerdas dan alirkan berkas CSV, TSV, atau Excel langsung ke Databricks Unity Catalog Volume.
-          </p>
-        </div>
+    <div className="max-w-4xl mx-auto space-y-8 md:space-y-10">
+      <PageHeader
+        title="Impor"
+        description="Normalisasi cerdas dan alirkan berkas CSV, TSV, atau Excel langsung ke Databricks Unity Catalog."
+      >
         <Link
           href="/guide#langkah-4"
-          className="inline-flex items-center gap-1.5 text-xs font-medium text-indigo-600 hover:text-indigo-700 self-start sm:self-center"
+          className="inline-flex items-center gap-1.5 text-[13px] font-medium text-indigo-600 hover:text-indigo-700"
         >
-          <HelpCircle className="h-3.5 w-3.5" />
+          <HelpCircle className="h-4 w-4" />
           <span>Butuh bantuan?</span>
         </Link>
-      </div>
+      </PageHeader>
 
       {isConfigured === false && (
-        <div className="rounded-xl border border-amber-200 bg-amber-50/70 p-4 text-xs space-y-2">
-          <div className="flex items-center gap-2 text-amber-900 font-semibold">
-            <AlertCircle className="h-4 w-4 shrink-0 text-amber-600" />
-            <span>Koneksi Databricks belum diatur</span>
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 rounded-xl border border-zinc-200 bg-white p-4 shadow-xs">
+          <div className="flex items-start gap-3">
+            <AlertCircle className="h-5 w-5 text-amber-600 shrink-0 mt-0.5" />
+            <div className="space-y-0.5">
+              <h3 className="text-sm font-semibold text-zinc-900">Koneksi Databricks belum diatur</h3>
+              <p className="text-[13px] text-zinc-600">
+                Atur koneksi terlebih dahulu agar berkas dapat diunggah langsung ke Unity Catalog Volume.
+              </p>
+            </div>
           </div>
-          <p className="text-amber-800 pl-6 leading-relaxed">
-            Atur koneksi Databricks terlebih dahulu agar berkas dapat diunggah dan disimpan langsung ke Unity Catalog Volume.
-          </p>
-          <div className="flex items-center gap-2 pl-6 pt-1">
-            <Button asChild size="sm" className="h-7 text-xs bg-indigo-600 hover:bg-indigo-700 text-white">
+          <div className="flex items-center gap-2 shrink-0 self-end sm:self-auto">
+            <Button asChild size="sm">
               <Link href="/settings">Pengaturan</Link>
             </Button>
-            <Button asChild variant="outline" size="sm" className="h-7 text-xs border-amber-300 text-amber-900 hover:bg-amber-100">
+            <Button asChild variant="secondary" size="sm">
               <Link href="/guide#langkah-3">Panduan</Link>
             </Button>
           </div>
         </div>
       )}
 
-      <Card>
-        <CardHeader className="pb-3">
-          <div className="flex items-center gap-2 text-xs font-semibold text-zinc-600 uppercase tracking-wider">
-            <Database className="h-4 w-4 text-indigo-600" />
-            <span>Target Penyimpanan Unity Catalog</span>
-          </div>
-        </CardHeader>
-        <CardContent>
+      <Section
+        title="Target Penyimpanan"
+        description="Volume Unity Catalog yang menjadi lokasi penyimpanan berkas hasil streaming."
+        card
+      >
+        <div className="space-y-4">
           <div className="grid gap-4 sm:grid-cols-3">
-            <div>
-              <label className="text-xs text-zinc-500 font-medium">Katalog</label>
-              <input
+            <Field label="Katalog" htmlFor="catalog">
+              <Input
+                id="catalog"
                 type="text"
                 value={catalog}
                 onChange={(e) => setCatalog(e.target.value)}
                 disabled={uploading || inspectingSheets}
-                className="mt-1 h-9 w-full rounded-xl border border-zinc-200 bg-white px-3 text-xs font-mono font-medium text-zinc-900 focus:outline-none focus:ring-1 focus:ring-indigo-600"
                 placeholder="main"
+                className="font-mono text-[13px]"
               />
-            </div>
-            <div>
-              <label className="text-xs text-zinc-500 font-medium">Skema</label>
-              <input
+            </Field>
+
+            <Field label="Skema" htmlFor="schema">
+              <Input
+                id="schema"
                 type="text"
                 value={schema}
                 onChange={(e) => setSchema(e.target.value)}
                 disabled={uploading || inspectingSheets}
-                className="mt-1 h-9 w-full rounded-xl border border-zinc-200 bg-white px-3 text-xs font-mono font-medium text-zinc-900 focus:outline-none focus:ring-1 focus:ring-indigo-600"
                 placeholder="csv_tidy"
+                className="font-mono text-[13px]"
               />
-            </div>
-            <div>
-              <label className="text-xs text-zinc-500 font-medium">Volume</label>
-              <input
+            </Field>
+
+            <Field label="Volume" htmlFor="volume">
+              <Input
+                id="volume"
                 type="text"
                 value={volume}
                 onChange={(e) => setVolume(e.target.value)}
                 disabled={uploading || inspectingSheets}
-                className="mt-1 h-9 w-full rounded-xl border border-zinc-200 bg-white px-3 text-xs font-mono font-medium text-zinc-900 focus:outline-none focus:ring-1 focus:ring-indigo-600"
                 placeholder="raw_uploads"
+                className="font-mono text-[13px]"
               />
-            </div>
+            </Field>
           </div>
-          <div className="mt-3 flex items-center gap-2 text-xs text-zinc-500">
-            <HardDrive className="h-3.5 w-3.5 text-indigo-600" />
-            <span>Path Volume:</span>
-            <code className="rounded-lg bg-zinc-100 px-2 py-0.5 text-xs font-mono text-indigo-600 font-medium">
-              /Volumes/{catalog}/{schema}/{volume}
+
+          <div className="flex items-center gap-2 text-xs text-zinc-600 border-t border-zinc-100 pt-3">
+            <HardDrive className="h-3.5 w-3.5 text-zinc-400" />
+            <span>Lokasi:</span>
+            <code className="font-mono text-zinc-800">
+              /Volumes/{catalog || "main"}/{schema || "csv_tidy"}/{volume || "raw_uploads"}
             </code>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </Section>
 
       {errorMessage && (
-        <div className="rounded-xl border border-rose-200 bg-rose-50/70 p-4 space-y-2 text-xs">
-          <div className="flex items-center gap-2 text-rose-800 font-semibold">
-            <AlertCircle className="h-4 w-4 shrink-0 text-rose-600" />
-            <span>{errorMessage.text}</span>
+        <div className="rounded-xl border border-rose-200 bg-white p-5 space-y-3 shadow-xs">
+          <div className="flex items-start gap-3">
+            <AlertCircle className="h-5 w-5 text-rose-600 shrink-0 mt-0.5" />
+            <div className="space-y-1">
+              <h4 className="text-sm font-semibold text-rose-900">{errorMessage.text}</h4>
+              {errorMessage.suggestion && (
+                <p className="text-[13px] text-zinc-600 leading-normal">{errorMessage.suggestion}</p>
+              )}
+            </div>
           </div>
-          {errorMessage.suggestion && (
-            <p className="text-rose-700 pl-6">
-              Saran: {errorMessage.suggestion}
-            </p>
-          )}
-          <div className="pl-6 pt-1">
+          <div className="pl-8">
             <Button
-              variant="outline"
+              variant="secondary"
               size="sm"
               onClick={resetUpload}
-              className="h-7 text-xs border-rose-300 text-rose-700 hover:bg-rose-100"
             >
               Coba Berkas Lain
             </Button>
@@ -417,70 +415,60 @@ export default function ImportPage() {
       )}
 
       {pendingFile && sheetOptions.length > 1 && (
-        <Card className="border-indigo-200 bg-indigo-50/30">
-          <CardContent className="p-6 space-y-4">
-            <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-100 text-indigo-600">
-                <FileSpreadsheet className="h-5 w-5" />
-              </div>
-              <div>
-                <h3 className="text-sm font-semibold text-zinc-900">
-                  Pilih Lembar Kerja (Sheet) Excel
-                </h3>
-                <p className="text-xs text-zinc-500">
-                  Berkas &quot;{pendingFile.name}&quot; memiliki {sheetOptions.length} lembar kerja. Pilih sheet yang ingin diimpor:
-                </p>
-              </div>
+        <div className="rounded-xl border border-zinc-200 bg-white p-6 space-y-4 shadow-xs">
+          <div className="flex items-start gap-3">
+            <FileSpreadsheet className="h-5 w-5 text-zinc-700 shrink-0 mt-0.5" />
+            <div className="space-y-1">
+              <h3 className="text-base font-semibold text-zinc-900">
+                Pilih Lembar Kerja (Sheet)
+              </h3>
+              <p className="text-[13px] text-zinc-600">
+                Berkas &quot;{pendingFile.name}&quot; memiliki {sheetOptions.length} sheet. Pilih sheet yang ingin diimpor:
+              </p>
             </div>
+          </div>
 
-            <div className="max-w-md">
-              <label className="text-xs font-medium text-zinc-600 block mb-1">
-                Sheet Target
-              </label>
-              <select
-                value={selectedSheet}
-                onChange={(e) => setSelectedSheet(e.target.value)}
-                className="h-10 w-full rounded-xl border border-zinc-200 bg-white px-3 text-xs font-medium text-zinc-900 focus:outline-none focus:ring-1 focus:ring-indigo-600"
-              >
-                {sheetOptions.map((sh) => (
-                  <option key={sh} value={sh}>
-                    {sh}
-                  </option>
-                ))}
-              </select>
-            </div>
+          <div className="max-w-xs">
+            <select
+              value={selectedSheet}
+              onChange={(e) => setSelectedSheet(e.target.value)}
+              className="flex h-10 w-full rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-900 focus:outline-none focus:ring-2 focus:ring-indigo-600/20 focus:border-indigo-600 transition-colors shadow-xs"
+            >
+              {sheetOptions.map((sh) => (
+                <option key={sh} value={sh}>
+                  {sh}
+                </option>
+              ))}
+            </select>
+          </div>
 
-            <div className="flex items-center gap-2 pt-2">
-              <Button
-                size="sm"
-                onClick={confirmSheetAndUpload}
-                className="bg-indigo-600 text-white hover:bg-indigo-700"
-              >
-                Lanjutkan Impor
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={resetUpload}
-              >
-                Batal
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
+          <div className="flex items-center gap-2 pt-2 border-t border-zinc-100">
+            <Button size="sm" onClick={confirmSheetAndUpload}>
+              Lanjutkan Impor
+            </Button>
+            <Button variant="secondary" size="sm" onClick={resetUpload}>
+              Batal
+            </Button>
+          </div>
+        </div>
       )}
 
       {!uploadResult && !pendingFile && (
-        <Card
-          className={`border-2 border-dashed transition-all ${
+        <div
+          className={`relative rounded-xl border border-dashed transition-colors duration-150 bg-white p-12 text-center cursor-pointer select-none ${
             dragActive
-              ? "border-indigo-600 bg-indigo-50/50"
+              ? "border-indigo-600 bg-indigo-50/20"
               : "border-zinc-300 hover:border-zinc-400"
           }`}
           onDragEnter={handleDrag}
           onDragLeave={handleDrag}
           onDragOver={handleDrag}
           onDrop={handleDrop}
+          onClick={() => {
+            if (!uploading && !inspectingSheets) {
+              fileInputRef.current?.click();
+            }
+          }}
         >
           <input
             ref={fileInputRef}
@@ -490,250 +478,193 @@ export default function ImportPage() {
             onChange={handleFileInputChange}
           />
 
-          <CardContent className="flex flex-col items-center justify-center py-16 px-6 text-center">
-            <div
-              className={`flex h-14 w-14 items-center justify-center rounded-2xl border transition-all ${
-                dragActive
-                  ? "bg-indigo-100 border-indigo-600 text-indigo-600 scale-105"
-                  : "bg-zinc-100 border-zinc-200 text-zinc-600"
-              }`}
-            >
-              <UploadCloud className="h-7 w-7" />
+          <div className="flex flex-col items-center justify-center space-y-3">
+            <div className="flex h-12 w-12 items-center justify-center rounded-lg border border-zinc-200 bg-zinc-50 text-zinc-600 transition-transform duration-150">
+              <UploadCloud className="h-6 w-6" />
             </div>
 
-            <h3 className="mt-4 text-base font-semibold text-zinc-900">
-              Tarik & Letakkan Berkas di Sini
-            </h3>
-            <p className="mt-1 text-xs text-zinc-500 max-w-md">
-              Mendukung CSV, TSV, dan Excel (.xlsx). Encoding (UTF-8, Latin-1, Windows-1252), tanda kutip, dan header dinormalisasi otomatis.
-            </p>
+            <div className="space-y-1">
+              <h3 className="text-sm font-semibold text-zinc-900">
+                Pilih atau seret berkas ke sini
+              </h3>
+              <p className="text-[13px] text-zinc-500 max-w-sm mx-auto">
+                Mendukung .csv, .tsv, dan .xlsx hingga {maxSizeMb} MB.
+              </p>
+            </div>
+          </div>
 
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              disabled={uploading || inspectingSheets}
-              onClick={() => fileInputRef.current?.click()}
-              className="mt-5 gap-2"
+          {inspectingSheets && (
+            <div className="mt-6 flex items-center justify-center gap-2 text-[13px] text-zinc-600">
+              <RefreshCw className="h-4 w-4 animate-spin text-indigo-600" />
+              <span>Memeriksa lembar kerja Excel...</span>
+            </div>
+          )}
+
+          {uploading && (
+            <div
+              className="mt-6 max-w-md mx-auto space-y-2 rounded-lg border border-zinc-200 bg-zinc-50 p-4 text-left"
+              onClick={(e) => e.stopPropagation()}
             >
-              <FolderOpen className="h-4 w-4" />
-              <span>Pilih Berkas (.csv, .tsv, .xlsx)</span>
-            </Button>
-
-            <p className="mt-3 text-xs text-zinc-400">
-              Maksimum {maxSizeMb} MB per berkas.
-            </p>
-
-            {inspectingSheets && (
-              <div className="mt-6 flex items-center gap-2 text-xs text-indigo-600">
-                <RefreshCw className="h-3.5 w-3.5 animate-spin" />
-                <span>Memeriksa lembar kerja Excel...</span>
+              <div className="flex items-center justify-between text-xs">
+                <span className="font-medium text-zinc-900 truncate max-w-[240px]">
+                  {selectedFile?.name}
+                </span>
+                <span className="font-mono text-zinc-600">{progress}%</span>
               </div>
-            )}
 
-            {uploading && (
-              <div className="mt-6 w-full max-w-md space-y-2 rounded-xl border border-indigo-200 bg-indigo-50/40 p-4 text-left">
-                <div className="flex items-center justify-between text-xs">
-                  <span className="font-semibold text-indigo-600 flex items-center gap-1.5">
-                    <RefreshCw className="h-3.5 w-3.5 animate-spin" />
-                    Menormalisasi & mengalirkan ke Databricks...
-                  </span>
-                  <span className="font-mono font-bold text-zinc-900">
-                    {progress}%
-                  </span>
-                </div>
+              <Progress value={progress} className="h-1.5" />
 
-                <Progress value={progress} className="h-2" />
-
-                <div className="flex items-center justify-between text-xs text-zinc-500">
-                  <span className="truncate max-w-[200px]">{selectedFile?.name}</span>
-                  {uploadSpeed && (
-                    <span className="font-mono text-indigo-600 font-medium">
-                      {uploadSpeed}
-                    </span>
-                  )}
-                </div>
+              <div className="flex items-center justify-between text-[13px] text-zinc-500">
+                <span>Mengalirkan ke Databricks...</span>
+                {uploadSpeed && <span className="font-mono text-xs">{uploadSpeed}</span>}
               </div>
-            )}
-          </CardContent>
-        </Card>
+            </div>
+          )}
+        </div>
       )}
 
       {uploadResult && (
-        <Card className="border-emerald-200 bg-emerald-50/30">
-          <CardContent className="p-6 space-y-5">
-            <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-100 text-emerald-600">
-                <CheckCircle2 className="h-6 w-6" />
-              </div>
-              <div>
+        <div className="rounded-xl border border-zinc-200 bg-white p-6 space-y-6 shadow-xs">
+          <div className="flex items-start justify-between gap-4">
+            <div className="flex items-start gap-3">
+              <CheckCircle2 className="h-5 w-5 text-emerald-600 shrink-0 mt-0.5" />
+              <div className="space-y-0.5">
                 <h3 className="text-base font-semibold text-zinc-900">
                   Pengunggahan Berhasil
                 </h3>
-                <p className="text-xs text-zinc-500">
-                  Berkas telah dinormalisasi menjadi UTF-8 CSV dan dialirkan utuh ke Unity Catalog Volume.
+                <p className="text-[13px] text-zinc-600">
+                  Berkas telah dinormalisasi dan dialirkan ke Unity Catalog Volume.
                 </p>
               </div>
             </div>
+          </div>
 
-            {uploadResult.detection && (
-              <div className="rounded-xl border border-zinc-200 bg-white p-5 space-y-4">
-                <div className="flex items-center justify-between border-b border-zinc-100 pb-3">
-                  <div className="flex items-center gap-2">
-                    <Sparkles className="h-4 w-4 text-indigo-600" />
-                    <h4 className="text-sm font-semibold text-zinc-900">Hasil Deteksi & Normalisasi</h4>
-                  </div>
-                  <span className="text-xs font-mono font-medium text-emerald-600 bg-emerald-50 border border-emerald-200 rounded-md px-2 py-0.5">
-                    Bersih & Siap
+          {uploadResult.detection && (
+            <div className="space-y-4 rounded-lg border border-zinc-200 bg-zinc-50/50 p-4">
+              <div className="flex items-center justify-between border-b border-zinc-200/60 pb-2.5">
+                <div className="flex items-center gap-2">
+                  <Sparkles className="h-4 w-4 text-indigo-600" />
+                  <h4 className="text-sm font-semibold text-zinc-900">Hasil Deteksi & Normalisasi</h4>
+                </div>
+                <span className="text-xs font-mono font-medium text-emerald-700 bg-emerald-50 border border-emerald-200 rounded px-2 py-0.5">
+                  Siap Diproses
+                </span>
+              </div>
+
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+                <div className="rounded-md border border-zinc-200 bg-white p-2.5">
+                  <span className="text-zinc-500 block">Encoding</span>
+                  <span className="font-mono font-semibold text-zinc-900 mt-0.5 block">
+                    {uploadResult.detection.encoding}
                   </span>
                 </div>
-
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
-                  <div className="rounded-lg bg-zinc-50 border border-zinc-200 p-2.5">
-                    <span className="text-zinc-500 block">Encoding Sumber</span>
-                    <span className="font-semibold text-zinc-900 font-mono mt-0.5 block">
-                      {uploadResult.detection.encoding}
-                    </span>
-                  </div>
-                  <div className="rounded-lg bg-zinc-50 border border-zinc-200 p-2.5">
-                    <span className="text-zinc-500 block">Pemisah (Delimiter)</span>
-                    <span className="font-semibold text-zinc-900 font-mono mt-0.5 block">
-                      {getDelimiterLabel(uploadResult.detection.delimiter)}
-                    </span>
-                  </div>
-                  <div className="rounded-lg bg-zinc-50 border border-zinc-200 p-2.5">
-                    <span className="text-zinc-500 block">Baris Data</span>
-                    <span className="font-semibold text-zinc-900 font-mono mt-0.5 block">
-                      {uploadResult.detection.rowCount.toLocaleString("id-ID")} baris
-                    </span>
-                  </div>
-                  <div className="rounded-lg bg-zinc-50 border border-zinc-200 p-2.5">
-                    <span className="text-zinc-500 block">Jumlah Kolom</span>
-                    <span className="font-semibold text-zinc-900 font-mono mt-0.5 block">
-                      {uploadResult.detection.columnCount} kolom
-                    </span>
-                  </div>
+                <div className="rounded-md border border-zinc-200 bg-white p-2.5">
+                  <span className="text-zinc-500 block">Pemisah</span>
+                  <span className="font-mono font-semibold text-zinc-900 mt-0.5 block">
+                    {getDelimiterLabel(uploadResult.detection.delimiter)}
+                  </span>
                 </div>
-
-                {uploadResult.detection.sheetName && (
-                  <div className="text-xs text-zinc-600 bg-zinc-50 rounded-lg p-2.5 border border-zinc-200">
-                    <span className="text-zinc-500 font-medium">Sheet Terpilih:</span>{" "}
-                    <span className="font-semibold text-zinc-900">{uploadResult.detection.sheetName}</span>
-                  </div>
-                )}
-
-                {uploadResult.detection.fixesApplied && uploadResult.detection.fixesApplied.length > 0 && (
-                  <div className="space-y-1.5 pt-1">
-                    <span className="text-xs font-medium text-zinc-700">Perbaikan yang diterapkan:</span>
-                    <ul className="space-y-1 text-xs text-zinc-600">
-                      {uploadResult.detection.fixesApplied.map((fix, idx) => (
-                        <li key={idx} className="flex items-start gap-2">
-                          <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600 shrink-0 mt-0.5" />
-                          <span>{fix}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
+                <div className="rounded-md border border-zinc-200 bg-white p-2.5">
+                  <span className="text-zinc-500 block">Jumlah Baris</span>
+                  <span className="font-mono font-semibold text-zinc-900 mt-0.5 block">
+                    {uploadResult.detection.rowCount.toLocaleString("id-ID")}
+                  </span>
+                </div>
+                <div className="rounded-md border border-zinc-200 bg-white p-2.5">
+                  <span className="text-zinc-500 block">Jumlah Kolom</span>
+                  <span className="font-mono font-semibold text-zinc-900 mt-0.5 block">
+                    {uploadResult.detection.columnCount}
+                  </span>
+                </div>
               </div>
-            )}
 
-            <div className="rounded-xl border border-zinc-200 bg-white p-4 space-y-1">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-semibold text-zinc-500 uppercase tracking-wider">
-                  ID Pekerjaan (Job ID)
-                </span>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="h-7 gap-1 px-2 text-xs"
-                  onClick={() => copyToClipboard(uploadResult.jobId, "jobId")}
-                >
-                  {copiedField === "jobId" ? (
-                    <Check className="h-3 w-3 text-emerald-600" />
-                  ) : (
-                    <Copy className="h-3 w-3" />
-                  )}
-                  <span>{copiedField === "jobId" ? "Tersalin" : "Salin"}</span>
-                </Button>
-              </div>
-              <p className="font-mono text-xs font-bold text-indigo-600 break-all">
-                {uploadResult.jobId}
-              </p>
+              {uploadResult.detection.sheetName && (
+                <div className="text-xs text-zinc-600">
+                  <span className="text-zinc-500">Sheet:</span>{" "}
+                  <span className="font-medium text-zinc-900">{uploadResult.detection.sheetName}</span>
+                </div>
+              )}
+
+              {uploadResult.detection.fixesApplied && uploadResult.detection.fixesApplied.length > 0 && (
+                <div className="space-y-1.5 pt-1">
+                  <span className="text-xs font-medium text-zinc-700">Perbaikan otomatis:</span>
+                  <ul className="space-y-1 text-xs text-zinc-600">
+                    {uploadResult.detection.fixesApplied.map((fix, idx) => (
+                      <li key={idx} className="flex items-start gap-2">
+                        <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600 shrink-0 mt-0.5" />
+                        <span>{fix}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
             </div>
+          )}
 
-            <div className="rounded-xl border border-zinc-200 bg-white p-4 space-y-1">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-semibold text-zinc-500 uppercase tracking-wider">
-                  Path Berkas Volume
-                </span>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="h-7 gap-1 px-2 text-xs"
-                  onClick={() => copyToClipboard(uploadResult.volumeFilePath, "path")}
-                >
-                  {copiedField === "path" ? (
-                    <Check className="h-3 w-3 text-emerald-600" />
-                  ) : (
-                    <Copy className="h-3 w-3" />
-                  )}
-                  <span>{copiedField === "path" ? "Tersalin" : "Salin"}</span>
-                </Button>
+          <div className="space-y-2">
+            <div className="flex items-center justify-between rounded-lg border border-zinc-200 bg-white px-3.5 py-2.5">
+              <div className="space-y-0.5">
+                <span className="text-xs text-zinc-500">ID Pekerjaan</span>
+                <p className="font-mono text-xs font-semibold text-zinc-900">{uploadResult.jobId}</p>
               </div>
-              <p className="font-mono text-xs text-zinc-700 break-all">
-                {uploadResult.volumeFilePath}
-              </p>
-            </div>
-
-            <div className="grid grid-cols-2 gap-3 text-xs">
-              <div className="rounded-xl border border-zinc-200 bg-white p-3">
-                <span className="text-zinc-500">Ukuran Asli</span>
-                <p className="font-semibold text-zinc-900 mt-0.5">
-                  {selectedFile
-                    ? `${(selectedFile.size / (1024 * 1024)).toFixed(2)} MB`
-                    : "—"}
-                </p>
-              </div>
-              <div className="rounded-xl border border-zinc-200 bg-white p-3">
-                <span className="text-zinc-500">Waktu Pengunggahan</span>
-                <p className="font-semibold text-zinc-900 mt-0.5">
-                  {new Date(uploadResult.uploadedAt).toLocaleTimeString([], {
-                    hour: "2-digit",
-                    minute: "2-digit",
-                    second: "2-digit",
-                  })}
-                </p>
-              </div>
-            </div>
-
-            <div className="flex flex-wrap items-center justify-end gap-3 pt-2">
               <Button
-                variant="outline"
+                variant="ghost"
                 size="sm"
-                onClick={resetUpload}
-                className="gap-2"
+                className="h-8 gap-1 px-2.5"
+                onClick={() => copyToClipboard(uploadResult.jobId, "jobId")}
               >
-                <UploadCloud className="h-4 w-4" />
-                <span>Unggah Berkas Lain</span>
+                {copiedField === "jobId" ? (
+                  <Check className="h-3.5 w-3.5 text-emerald-600" />
+                ) : (
+                  <Copy className="h-3.5 w-3.5" />
+                )}
+                <span>{copiedField === "jobId" ? "Tersalin" : "Salin"}</span>
               </Button>
+            </div>
 
-              <Button asChild variant="outline" size="sm" className="gap-2">
+            <div className="flex items-center justify-between rounded-lg border border-zinc-200 bg-white px-3.5 py-2.5">
+              <div className="space-y-0.5">
+                <span className="text-xs text-zinc-500">Lokasi Volume</span>
+                <p className="font-mono text-xs text-zinc-700 break-all">{uploadResult.volumeFilePath}</p>
+              </div>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-8 gap-1 px-2.5"
+                onClick={() => copyToClipboard(uploadResult.volumeFilePath, "path")}
+              >
+                {copiedField === "path" ? (
+                  <Check className="h-3.5 w-3.5 text-emerald-600" />
+                ) : (
+                  <Copy className="h-3.5 w-3.5" />
+                )}
+                <span>{copiedField === "path" ? "Tersalin" : "Salin"}</span>
+              </Button>
+            </div>
+          </div>
+
+          <div className="flex flex-wrap items-center justify-between gap-3 pt-2 border-t border-zinc-100">
+            <Button variant="secondary" size="sm" onClick={resetUpload}>
+              Unggah Berkas Lain
+            </Button>
+
+            <div className="flex items-center gap-2">
+              <Button asChild variant="secondary" size="sm">
                 <Link href="/history">
-                  <span>Lihat Riwayat</span>
+                  <span>Riwayat</span>
                   <ArrowRight className="h-4 w-4" />
                 </Link>
               </Button>
 
-              <Button asChild size="sm" className="gap-2 bg-indigo-600 text-white hover:bg-indigo-700">
+              <Button asChild size="sm">
                 <Link href={`/tidy/${uploadResult.jobId}`}>
-                  <Sparkles className="h-4 w-4" />
-                  <span>Bersihkan CSV Sekarang</span>
+                  <span>Bersihkan CSV</span>
+                  <ArrowRight className="h-4 w-4" />
                 </Link>
               </Button>
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       )}
     </div>
   );

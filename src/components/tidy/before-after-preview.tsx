@@ -11,9 +11,8 @@ import {
   Play,
   FileSpreadsheet,
   RefreshCw,
-  Sparkles,
 } from "lucide-react";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -75,73 +74,57 @@ export function BeforeAfterPreview({
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <Card>
-          <CardHeader className="pb-2 pt-4 px-4 flex flex-row items-center justify-between">
-            <span className="text-xs font-medium text-zinc-500">
-              Baris Masuk (CSV)
-            </span>
+        <div className="rounded-xl border border-zinc-200 bg-white p-4 shadow-xs">
+          <div className="flex items-center justify-between text-xs font-medium text-zinc-500">
+            <span>Baris Masuk</span>
             <FileSpreadsheet className="h-4 w-4 text-zinc-400" />
-          </CardHeader>
-          <CardContent className="px-4 pb-4">
-            <div className="text-2xl font-bold font-mono tracking-tight text-zinc-900">
-              {summary.rowsIn.toLocaleString()}
-            </div>
-            <p className="text-[11px] text-zinc-400 mt-0.5">
-              Baris data mentah dari CSV
-            </p>
-          </CardContent>
-        </Card>
+          </div>
+          <div className="text-2xl font-semibold font-mono tracking-tight text-zinc-900 mt-2">
+            {summary.rowsIn.toLocaleString("id-ID")}
+          </div>
+          <p className="text-[13px] text-zinc-500 mt-1">
+            Data mentah dari berkas
+          </p>
+        </div>
 
-        <Card className="border-emerald-200 bg-emerald-50/20">
-          <CardHeader className="pb-2 pt-4 px-4 flex flex-row items-center justify-between">
-            <span className="text-xs font-medium text-emerald-700">
-              Baris Lolos Validasi
-            </span>
+        <div className="rounded-xl border border-zinc-200 bg-white p-4 shadow-xs">
+          <div className="flex items-center justify-between text-xs font-medium text-zinc-500">
+            <span>Lolos Validasi</span>
             <CheckCircle2 className="h-4 w-4 text-emerald-600" />
-          </CardHeader>
-          <CardContent className="px-4 pb-4">
-            <div className="text-2xl font-bold font-mono tracking-tight text-emerald-700">
-              {summary.rowsOut.toLocaleString()}
-            </div>
-            <p className="text-[11px] text-zinc-500 mt-0.5">
-              Baris lolos transformasi & validasi
-            </p>
-          </CardContent>
-        </Card>
+          </div>
+          <div className="text-2xl font-semibold font-mono tracking-tight text-zinc-900 mt-2">
+            {summary.rowsOut.toLocaleString("id-ID")}
+          </div>
+          <p className="text-[13px] text-zinc-500 mt-1">
+            Lolos transformasi & skema
+          </p>
+        </div>
 
-        <Card>
-          <CardHeader className="pb-2 pt-4 px-4 flex flex-row items-center justify-between">
-            <span className="text-xs font-medium text-zinc-500">
-              Duplikat Disaring
-            </span>
+        <div className="rounded-xl border border-zinc-200 bg-white p-4 shadow-xs">
+          <div className="flex items-center justify-between text-xs font-medium text-zinc-500">
+            <span>Duplikat Disaring</span>
             <ArrowDownRight className="h-4 w-4 text-zinc-400" />
-          </CardHeader>
-          <CardContent className="px-4 pb-4">
-            <div className="text-2xl font-bold font-mono tracking-tight text-zinc-900">
-              {summary.duplicatesRemoved.toLocaleString()}
-            </div>
-            <p className="text-[11px] text-zinc-400 mt-0.5">
-              Baris ganda disaring otomatis
-            </p>
-          </CardContent>
-        </Card>
+          </div>
+          <div className="text-2xl font-semibold font-mono tracking-tight text-zinc-900 mt-2">
+            {summary.duplicatesRemoved.toLocaleString("id-ID")}
+          </div>
+          <p className="text-[13px] text-zinc-500 mt-1">
+            Baris ganda tereliminasi
+          </p>
+        </div>
 
-        <Card className="border-rose-200 bg-rose-50/20">
-          <CardHeader className="pb-2 pt-4 px-4 flex flex-row items-center justify-between">
-            <span className="text-xs font-medium text-rose-700">
-              Baris Karantina
-            </span>
-            <AlertOctagon className="h-4 w-4 text-rose-600" />
-          </CardHeader>
-          <CardContent className="px-4 pb-4">
-            <div className="text-2xl font-bold font-mono tracking-tight text-rose-700">
-              {summary.rowsInQuarantine.toLocaleString()}
-            </div>
-            <p className="text-[11px] text-zinc-500 mt-0.5">
-              Diisolasi ke tabel _quarantine
-            </p>
-          </CardContent>
-        </Card>
+        <div className="rounded-xl border border-zinc-200 bg-white p-4 shadow-xs">
+          <div className="flex items-center justify-between text-xs font-medium text-zinc-500">
+            <span>Baris Karantina</span>
+            <AlertOctagon className="h-4 w-4 text-amber-600" />
+          </div>
+          <div className="text-2xl font-semibold font-mono tracking-tight text-zinc-900 mt-2">
+            {summary.rowsInQuarantine.toLocaleString("id-ID")}
+          </div>
+          <p className="text-[13px] text-zinc-500 mt-1">
+            Diisolasi ke tabel karantina
+          </p>
+        </div>
       </div>
 
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 bg-zinc-50 border border-zinc-200 p-3 rounded-xl">
@@ -209,10 +192,7 @@ export function BeforeAfterPreview({
                       key={header}
                       className="py-2.5 px-3 text-left font-mono font-semibold text-zinc-900 border-l border-zinc-200 whitespace-nowrap"
                     >
-                      <div className="flex items-center gap-1.5">
-                        <span>{header}</span>
-                        <Sparkles className="h-3 w-3 text-indigo-600" />
-                      </div>
+                      {header}
                     </th>
                   ))}
                 </tr>
@@ -223,29 +203,37 @@ export function BeforeAfterPreview({
                     key={rIdx}
                     className="hover:bg-zinc-50 transition-colors"
                   >
-                    <td className="py-2 px-3 font-mono text-[11px] text-zinc-400">
+                    <td className="py-2 px-3 font-mono text-xs text-zinc-400">
                       {rIdx + 1}
                     </td>
                     {cleanHeaders.map((header) => {
                       const val = row[header];
                       const isNull = val === null || val === undefined;
+                      const rawVal = rawRows[rIdx]?.[header];
+                      const isChanged =
+                        rawRows[rIdx] !== undefined &&
+                        (rawVal === undefined || String(rawVal) !== String(val ?? ""));
                       return (
                         <td
                           key={header}
-                          className="py-2 px-3 font-mono text-xs border-l border-zinc-100 whitespace-nowrap text-zinc-900"
+                          className={`py-2 px-3 font-mono text-xs border-l border-zinc-100 whitespace-nowrap ${
+                            isChanged
+                              ? "bg-amber-50/80 text-amber-900"
+                              : "text-zinc-800"
+                          }`}
                         >
                           {isNull ? (
-                            <span className="text-[10px] text-zinc-400 italic">
+                            <span className="text-xs text-zinc-400 italic">
                               null
                             </span>
                           ) : typeof val === "number" ? (
-                            <span className="text-emerald-700 font-semibold">
+                            <span className={isChanged ? "text-amber-950 font-semibold" : "text-emerald-700 font-semibold"}>
                               {val.toLocaleString()}
                             </span>
                           ) : typeof val === "boolean" ? (
                             <Badge
                               variant={val ? "success" : "destructive"}
-                              className="text-[10px]"
+                              className="text-xs"
                             >
                               {val ? "TRUE" : "FALSE"}
                             </Badge>
@@ -292,7 +280,7 @@ export function BeforeAfterPreview({
                     key={rIdx}
                     className="hover:bg-zinc-50 transition-colors"
                   >
-                    <td className="py-2 px-3 font-mono text-[11px] text-zinc-400">
+                    <td className="py-2 px-3 font-mono text-xs text-zinc-400">
                       {rIdx + 1}
                     </td>
                     {rawHeaders.map((header) => (
