@@ -405,56 +405,54 @@ export async function convertXlsxToCsvStream(
   input: Readable,
   targetSheetName?: string
 ): Promise<{ stream: Readable; sheetName: string; availableSheets: string[] }> {
-  const workbookReader = new ExcelJS.stream.xlsx.WorkbookReader(input, {
-    entries: "emit",
-    sharedStrings: "cache",
-    worksheets: "emit",
-  });
+  const workbook = new ExcelJS.Workbook();
+  await workbook.xlsx.read(input);
 
-  const availableSheets: string[] = [];
-  let selectedWorksheetStream: AsyncIterable<ExcelJS.Row> | null = null;
-  let finalSheetName = "";
-
-  for await (const ws of workbookReader) {
-    const worksheet = ws as unknown as { name?: string } & AsyncIterable<ExcelJS.Row>;
-    const sName = worksheet.name || `Sheet${availableSheets.length + 1}`;
-    availableSheets.push(sName);
-
-    if (
-      !selectedWorksheetStream &&
-      (!targetSheetName || targetSheetName.toLowerCase() === sName.toLowerCase())
-    ) {
-      selectedWorksheetStream = worksheet;
-      finalSheetName = sName;
-    }
-  }
-
-  if (!selectedWorksheetStream) {
+  const availableSheets: string[] = workbook.worksheets.map((ws) => ws.name);
+  if (availableSheets.length === 0) {
     throw new NormalizationError(
-      `Sheet Excel '${targetSheetName || ""}' tidak ditemukan.`,
-      `Pilih salah satu sheet yang tersedia: ${availableSheets.join(", ")}`,
-      "ERR_SHEET_NOT_FOUND"
+      "Berkas Excel tidak memiliki lembar kerja (worksheet).",
+      "Pastikan berkas Excel memiliki setidaknya satu lembar kerja aktif.",
+      "ERR_NO_SHEETS"
     );
   }
 
+  let worksheet = workbook.worksheets[0];
+  if (targetSheetName) {
+    const found = workbook.worksheets.find(
+      (ws) => ws.name.toLowerCase() === targetSheetName.toLowerCase()
+    );
+    if (!found) {
+      throw new NormalizationError(
+        `Sheet Excel '${targetSheetName}' tidak ditemukan.`,
+        `Pilih salah satu sheet yang tersedia: ${availableSheets.join(", ")}`,
+        "ERR_SHEET_NOT_FOUND"
+      );
+    }
+    worksheet = found;
+  }
+
+  const finalSheetName = worksheet.name;
   const csvStream = new Readable({
     read() {},
   });
 
   (async () => {
     try {
-      for await (const row of selectedWorksheetStream) {
-        const rawValues = Array.isArray(row.values)
-          ? row.values.slice(1)
-          : [];
+      worksheet.eachRow((row) => {
+        const rawValues = Array.isArray(row.values) ? row.values.slice(1) : [];
         const csvLine =
           rawValues
             .map((v) => {
               if (v === null || v === undefined) return "";
               if (v instanceof Date) return v.toISOString();
               if (typeof v === "object") {
-                if ("result" in v && v.result !== undefined) return String(v.result);
-                if ("text" in v && v.text !== undefined) return String(v.text);
+                if ("result" in v && (v as { result?: unknown }).result !== undefined) {
+                  return String((v as { result?: unknown }).result);
+                }
+                if ("text" in v && (v as { text?: unknown }).text !== undefined) {
+                  return String((v as { text?: unknown }).text);
+                }
                 return JSON.stringify(v);
               }
               return String(v);
@@ -463,7 +461,7 @@ export async function convertXlsxToCsvStream(
             .join(",") + "\n";
 
         csvStream.push(csvLine);
-      }
+      });
       csvStream.push(null);
     } catch (err) {
       csvStream.destroy(err instanceof Error ? err : new Error(String(err)));

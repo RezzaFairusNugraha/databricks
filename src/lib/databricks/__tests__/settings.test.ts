@@ -22,7 +22,7 @@ describe("Databricks Settings & AES-256-GCM Encryption", () => {
   });
 
   it("masks token showing dots and only the last 4 characters", () => {
-    expect(maskToken("test-token-bukan-asli")).toBe("••••••••••••a998");
+    expect(maskToken("test-token-bukan-asli")).toBe("••••••••••••asli");
     expect(maskToken("test")).toBe("••••");
     expect(maskToken("")).toBe("");
   });

@@ -22,18 +22,10 @@ export async function POST(request: NextRequest) {
       request.body as unknown as import("node:stream/web").ReadableStream
     );
 
-    const workbookReader = new ExcelJS.stream.xlsx.WorkbookReader(nodeStream, {
-      entries: "emit",
-      worksheets: "emit",
-    });
+    const workbook = new ExcelJS.Workbook();
+    await workbook.xlsx.read(nodeStream);
 
-    const sheets: string[] = [];
-    for await (const ws of workbookReader) {
-      const worksheet = ws as unknown as { name?: string };
-      if (worksheet.name) {
-        sheets.push(worksheet.name);
-      }
-    }
+    const sheets = workbook.worksheets.map((ws) => ws.name);
 
     return NextResponse.json({
       success: true,
