@@ -1,26 +1,15 @@
 import { IdentifierSchema } from "./types";
 
-/**
- * Escapes and safely quotes a SQL identifier with backticks.
- * Complies with Databricks Spark SQL identifier syntax.
- * Replaces any existing backtick with a doubled backtick.
- */
 export function quoteIdentifier(rawName: string): string {
   const validated = IdentifierSchema.parse(rawName.trim());
   const escaped = validated.replace(/`/g, "``");
   return `\`${escaped}\``;
 }
 
-/**
- * Safely quotes a 2-part identifier: `catalog`.`schema`
- */
 export function quoteSchema(catalog: string, schema: string): string {
   return `${quoteIdentifier(catalog)}.${quoteIdentifier(schema)}`;
 }
 
-/**
- * Safely quotes a 3-part identifier: `catalog`.`schema`.`table`
- */
 export function quoteTable(
   catalog: string,
   schema: string,
@@ -29,9 +18,6 @@ export function quoteTable(
   return `${quoteIdentifier(catalog)}.${quoteIdentifier(schema)}.${quoteIdentifier(table)}`;
 }
 
-/**
- * Safely quotes a 3-part volume identifier: `catalog`.`schema`.`volume`
- */
 export function quoteVolume(
   catalog: string,
   schema: string,
@@ -40,45 +26,26 @@ export function quoteVolume(
   return `${quoteIdentifier(catalog)}.${quoteIdentifier(schema)}.${quoteIdentifier(volume)}`;
 }
 
-/**
- * Generates safely quoted SQL for checking connection vitality.
- */
 export function buildTestQuery(): string {
   return "SELECT 1 AS alive, current_timestamp() AS ts;";
 }
 
-/**
- * Generates safely quoted SQL to list Unity Catalogs.
- */
 export function buildListCatalogsQuery(): string {
   return "SHOW CATALOGS;";
 }
 
-/**
- * Generates safely quoted SQL to list schemas inside a catalog.
- */
 export function buildListSchemasQuery(catalog: string): string {
   return `SHOW SCHEMAS IN ${quoteIdentifier(catalog)};`;
 }
 
-/**
- * Generates safely quoted SQL to list tables inside a schema.
- */
 export function buildListTablesQuery(catalog: string, schema: string): string {
   return `SHOW TABLES IN ${quoteSchema(catalog, schema)};`;
 }
 
-/**
- * Generates safely quoted SQL to list volumes inside a schema.
- */
 export function buildListVolumesQuery(catalog: string, schema: string): string {
   return `SHOW VOLUMES IN ${quoteSchema(catalog, schema)};`;
 }
 
-/**
- * Normalizes a Unity Catalog volume path:
- * e.g. /Volumes/main/csv_tidy/raw_uploads/myfile.csv
- */
 export function buildVolumeFilePath(
   catalog: string,
   schema: string,
@@ -90,4 +57,60 @@ export function buildVolumeFilePath(
   const safeVolume = IdentifierSchema.parse(volume.trim());
   const cleanSubpath = subpath.replace(/^\/+/, "");
   return `/Volumes/${safeCatalog}/${safeSchema}/${safeVolume}/${cleanSubpath}`;
+}
+
+export function buildProfileQuery(
+  volumeFilePath: string,
+  options: {
+    delimiter?: string;
+    header?: boolean;
+    columns?: string[];
+  } = {}
+): string {
+  const cleanPath = volumeFilePath.replace(/'/g, "''");
+  const delimiter = (options.delimiter || ",").replace(/'/g, "''");
+  const header = options.header !== false;
+
+  const columnAggregations = (options.columns || []).map((col) => {
+    const qCol = quoteIdentifier(col);
+    const safeColName = col.replace(/`/g, "``");
+    return `COUNT_IF(${qCol} IS NULL OR TRIM(CAST(${qCol} AS STRING)) = '') AS \`null_count_${safeColName}\`, COUNT(DISTINCT ${qCol}) AS \`distinct_count_${safeColName}\``;
+  });
+
+  const selectList = [
+    "COUNT(*) AS total_rows",
+    ...columnAggregations,
+  ].join(",\n  ");
+
+  return `SELECT
+  ${selectList}
+FROM read_files(
+  '${cleanPath}',
+  format => 'csv',
+  header => ${header ? "true" : "false"},
+  delimiter => '${delimiter}'
+);`;
+}
+
+export function buildSampleRowsQuery(
+  volumeFilePath: string,
+  options: {
+    delimiter?: string;
+    header?: boolean;
+    limit?: number;
+  } = {}
+): string {
+  const cleanPath = volumeFilePath.replace(/'/g, "''");
+  const delimiter = (options.delimiter || ",").replace(/'/g, "''");
+  const header = options.header !== false;
+  const limit = Math.min(Math.max(options.limit || 50, 1), 1000);
+
+  return `SELECT *
+FROM read_files(
+  '${cleanPath}',
+  format => 'csv',
+  header => ${header ? "true" : "false"},
+  delimiter => '${delimiter}'
+)
+LIMIT ${limit};`;
 }

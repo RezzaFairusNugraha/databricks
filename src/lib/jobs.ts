@@ -57,9 +57,7 @@ function ensureDirectory() {
     if (!fs.existsSync(DATA_DIR)) {
       fs.mkdirSync(DATA_DIR, { recursive: true });
     }
-  } catch {
-    // Ignore in read-only environments
-  }
+  } catch {}
 }
 
 export function getAllJobs(): JobRecord[] {

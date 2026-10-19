@@ -1,0 +1,22 @@
+LAPORAN PENJUALAN BULANAN PT MAJU BERSAMA TBK
+Periode: Q3 2024 | Cabang: Jakarta Pusat & Surabaya
+Status Ekspor: Final | Diekspor pada: 15/10/2024 10:30 WIB
+
+ID Transaksi;Nama Pelanggan;Tanggal Transaksi;Kategori Produk;Harga Satuan;Jumlah;Diskon;Total Bayar;Lunas?;Catatan Tambahan
+TRX-001;Budi Santoso;28/08/2024;Elektronik;Rp 1.500.000,00;2;0%;Rp 3.000.000,00;ya;Pelanggan prioritas
+TRX-002;Siti Nurhaliza;15/09/2024;Pakaian;Rp 250.000,50;4;10%;Rp 900.001,80;ya;Pengiriman ekspres
+TRX-003;Ahmad Dahlan;05/09/2024;Konsumsi;Rp 85.000,00;10;0%;Rp 850.000,00;tidak;Menunggu transfer
+TRX-004;Dewi Lestari;22/07/2024;Elektronik;Rp 4.200.000,00;1;5%;Rp 3.990.000,00;ya;-
+TRX-005;Eko Prasetyo;18/08/2024;Peralatan Kantor;Rp 320.000,00;3;N/A;Rp 960.000,00;T;Giro mundur
+TRX-006;Fajar Nugraha;31/08/2024;Elektronik;Rp 750.000,00;2;0%;Rp 1.500.000,00;Y;Lunas via QRIS
+TRX-007;Gita Gutawa;14/09/2024;Pakaian;Rp 1.100.000,00;1;15%;Rp 935.000,00;ya;Diskon member
+;;;;;;;;;
+ID Transaksi;Nama Pelanggan;Tanggal Transaksi;Kategori Produk;Harga Satuan;Jumlah;Diskon;Total Bayar;Lunas?;Catatan Tambahan
+TRX-008;Hendra Setiawan;02/09/2024;Konsumsi;Rp 45.000,00;20;0%;Rp 900.000,00;ya;Katering kantor
+TRX-009;Indah Permatasari;19/08/2024;Elektronik;Rp 2.800.000,00;1;0%;Rp 2.800.000,00;tidak;null
+TRX-010;Joko Widodo;25/09/2024;Peralatan Kantor;Rp 150.000,00;8;10%;Rp 1.080.000,00;ya;PO-2024-889
+TRX-011;Kartika Putri;30/07/2024;Pakaian;Rp 450.000,00;2;0%;Rp 900.000,00;benar;Pengambilan di toko
+TRX-012;Lukman Hakim;11/09/2024;Elektronik;Rp 6.500.000,00;1;N/A;Rp 6.500.000,00;salah;Cicilan 0% 6 bln
+;;;;;;;;;
+TOTAL;;;;;;;Rp 24.315.001,80;;
+Grand Total;;;;;;;Rp 24.315.001,80;;

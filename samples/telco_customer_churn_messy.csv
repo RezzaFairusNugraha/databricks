@@ -1,0 +1,19 @@
+TELCO GLOBAL DATA EXTRACT
+System: Billing-Engine v4.2 | Generated: 2024-11-01
+
+Customer ID|Full Name|Monthly Charges ($)|Total Spend|Tenure (Months)|Is Churn?|Signup Date|Customer ID|
+CUST-1001|John Doe|$ 65.50|1,450.25|24|no|05/06/2022|CUST-1001|
+CUST-1002|Jane Smith|$ 89.99|2,890.50|36|yes|08/11/2021|CUST-1002|
+CUST-1003|Robert Taylor|$ 45.00|540.00|12|false|03/04/2023|CUST-1003|
+CUST-1004|Emily Davis|USD 110.20|4,520.80|48|0|01/02/2020|CUST-1004|
+CUST-1005|Michael Brown|$ 75.00|1,875.00|25|1|07/09/2022|CUST-1005|
+||||||||
+Customer ID|Full Name|Monthly Charges ($)|Total Spend|Tenure (Months)|Is Churn?|Signup Date|Customer ID|
+CUST-1006|Sarah Wilson|USD 55.40|660.00|12|no|09/12/2023|CUST-1006|
+CUST-1007|David Martinez|$ 95.80|3,830.00|40|true|04/05/2021|CUST-1007|
+CUST-1008|Jessica Anderson|$ 120.00|6,000.00|50|no|02/08/2020|CUST-1008|
+CUST-1009|James Thomas|USD 30.00|NA|3|yes|06/10/2024|CUST-1009|
+CUST-1010|Amanda White|$ 82.50|1,980.00|24|0|11/03/2022|CUST-1010|
+||||||||
+Total Subscribers||||||||
+Summary Count: 10||||||||

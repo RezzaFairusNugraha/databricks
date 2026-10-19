@@ -37,7 +37,14 @@ export interface ConnectionTestResult {
   userOrPrincipal?: string;
   catalogCount?: number;
   message: string;
-  diagnostics: Array<{ step: string; status: "success" | "warning" | "error"; detail: string }>;
+  suggestion?: string;
+  failedStep?: "url" | "token" | "warehouse" | "target" | "permission" | "unknown";
+  diagnostics: Array<{
+    step: string;
+    status: "success" | "warning" | "error";
+    detail: string;
+    action?: string;
+  }>;
   error?: string;
 }
 
@@ -92,8 +99,7 @@ export interface UploadResult {
 export const IdentifierSchema = z
   .string()
   .min(1, "Identifier cannot be empty")
-  .max(255, "Identifier too long")
-  .regex(/^[^;]+$/, "Identifier contains forbidden characters");
+  .max(255, "Identifier too long");
 
 export type DatabricksErrorCode =
   | "ERR_AUTH_FAILED"

@@ -9,7 +9,6 @@ export function mapDatabricksError(error: unknown): DatabricksError {
     error instanceof Error ? error.message : typeof error === "string" ? error : "Unknown Databricks error";
   const lowerMsg = message.toLowerCase();
 
-  // 1. Permission Denied
   if (
     lowerMsg.includes("permission_denied") ||
     lowerMsg.includes("access_denied") ||
@@ -31,7 +30,6 @@ export function mapDatabricksError(error: unknown): DatabricksError {
     });
   }
 
-  // 2. Authentication Failure
   if (
     lowerMsg.includes("unauthorized") ||
     lowerMsg.includes("invalid token") ||
@@ -47,13 +45,12 @@ export function mapDatabricksError(error: unknown): DatabricksError {
       friendlyMessageEn:
         "Authentication failed. Databricks access token is invalid or has expired.",
       suggestion:
-        "Periksa nilai DATABRICKS_TOKEN atau DATABRICKS_CLIENT_ID / CLIENT_SECRET pada file .env.local Anda.",
+        "Periksa nilai Personal Access Token pada halaman Pengaturan.",
       statusCode: 401,
       rawDetails: error,
     });
   }
 
-  // 3. Warehouse Starting / Stopped
   if (
     lowerMsg.includes("starting") ||
     lowerMsg.includes("warehouse is starting") ||
@@ -91,7 +88,6 @@ export function mapDatabricksError(error: unknown): DatabricksError {
     });
   }
 
-  // 4. Schema Not Found
   if (
     lowerMsg.includes("schema_not_found") ||
     lowerMsg.includes("database_not_found") ||
@@ -111,7 +107,6 @@ export function mapDatabricksError(error: unknown): DatabricksError {
     });
   }
 
-  // 5. Catalog Not Found
   if (
     lowerMsg.includes("catalog_not_found") ||
     (lowerMsg.includes("catalog") && lowerMsg.includes("not found"))
@@ -122,13 +117,12 @@ export function mapDatabricksError(error: unknown): DatabricksError {
       friendlyMessageId: "Katalog Unity Catalog tidak ditemukan.",
       friendlyMessageEn: "Unity Catalog was not found in the workspace.",
       suggestion:
-        "Pastikan nama katalog di konfigurasi (DATABRICKS_DEFAULT_CATALOG) sesuai dengan katalog yang ada di workspace.",
+        "Pastikan nama katalog pada halaman Pengaturan sesuai dengan katalog yang ada di workspace.",
       statusCode: 404,
       rawDetails: error,
     });
   }
 
-  // 6. Volume Not Found
   if (
     lowerMsg.includes("volume") &&
     (lowerMsg.includes("not found") || lowerMsg.includes("does not exist"))
@@ -146,7 +140,6 @@ export function mapDatabricksError(error: unknown): DatabricksError {
     });
   }
 
-  // Default / Unknown error
   return new DatabricksError({
     code: "ERR_UNKNOWN",
     message,

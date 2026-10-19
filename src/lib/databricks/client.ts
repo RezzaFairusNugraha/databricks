@@ -1,10 +1,13 @@
 import crypto from "crypto";
+import fs from "fs";
+import path from "path";
 import { getDatabricksConfig, getDatabricksBearerToken } from "./config";
 import { mapDatabricksError } from "./errors";
 import {
   buildListCatalogsQuery,
   buildListSchemasQuery,
   buildListTablesQuery,
+  buildListVolumesQuery,
   buildTestQuery,
   buildVolumeFilePath,
 } from "./sql-builder";
@@ -52,6 +55,7 @@ interface DatabricksStatementApiResult {
     row_count?: number;
   };
 }
+
 export async function runSql(
   query: string,
   options: { maxRows?: number; timeoutSecs?: number } = {},
@@ -100,7 +104,6 @@ export async function runSql(
     let statementData = (await postRes.json()) as DatabricksStatementApiResult;
     let state = statementData.status.state;
 
-    // Poll if still PENDING or RUNNING (handles warehouse auto-start)
     while (state === "PENDING" || state === "RUNNING") {
       if (Date.now() - startTime > timeoutMs) {
         throw new DatabricksError({
@@ -179,165 +182,319 @@ export async function testConnection(): Promise<ConnectionTestResult> {
   const diagnostics: ConnectionTestResult["diagnostics"] = [];
   const start = Date.now();
 
-  if (!config.host || !config.warehouseId) {
+  if (!config.host || !config.warehouseId || !config.token) {
     return {
       success: false,
       latencyMs: 0,
-      message:
-        "DATABRICKS_HOST atau DATABRICKS_WAREHOUSE_ID belum diisi di environment variables.",
+      failedStep: "unknown",
+      message: "Konfigurasi Databricks belum lengkap di menu Pengaturan.",
+      suggestion: "Lengkapi URL Workspace, SQL Warehouse ID, dan Personal Access Token di form Pengaturan.",
       diagnostics: [
         {
-          step: "Environment Variables",
+          step: "Pemeriksaan Pengaturan",
           status: "error",
-          detail:
-            "Environment variables DATABRICKS_HOST atau DATABRICKS_WAREHOUSE_ID tidak ditemukan.",
+          detail: "Parameter koneksi belum lengkap.",
+          action: "Isi seluruh kolom wajib di halaman Pengaturan dan klik Simpan.",
         },
       ],
       error: "Missing configuration",
     };
   }
 
+  diagnostics.push({
+    step: "Pemeriksaan Pengaturan",
+    status: "success",
+    detail: `Host: ${config.host}, Warehouse ID: ${config.warehouseId}, Target: ${config.defaultCatalog}.${config.defaultSchema}.${config.defaultVolume}`,
+  });
+
+  let token: string;
   try {
+    token = await getDatabricksBearerToken();
     diagnostics.push({
-      step: "Environment Configuration",
+      step: "Token Autentikasi",
       status: "success",
-      detail: `Host: ${config.host}, Warehouse ID: ${config.warehouseId}, Target: ${config.defaultCatalog}.${config.defaultSchema}.${config.defaultVolume}`,
+      detail: "Personal Access Token terbaca dari penyimpanan terenkripsi.",
     });
-
-    // 1. Check Bearer Token resolution
-    let token: string;
-    try {
-      token = await getDatabricksBearerToken();
-      diagnostics.push({
-        step: "Token Resolution",
-        status: "success",
-        detail: `Token berhasil didapatkan via ${config.token ? "PAT" : "OAuth M2M"}.`,
-      });
-    } catch (tokenErr) {
-      const mapped = mapDatabricksError(tokenErr);
-      diagnostics.push({
-        step: "Token Resolution",
-        status: "error",
-        detail: mapped.friendlyMessageId,
-      });
-      return {
-        success: false,
-        latencyMs: Date.now() - start,
-        message: mapped.friendlyMessageId,
-        diagnostics,
-        error: mapped.message,
-      };
-    }
-
-    // 2. Fetch Warehouse Status
-    let warehouseStatus: ConnectionTestResult["warehouseStatus"] = "UNKNOWN";
-    let warehouseName = "";
-    try {
-      const whRes = await fetch(
-        `${config.host}/api/2.0/sql/warehouses/${config.warehouseId}`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        },
-      );
-
-      if (whRes.ok) {
-        const whData = await whRes.json();
-        warehouseStatus = whData.state;
-        warehouseName = whData.name || config.warehouseId;
-        diagnostics.push({
-          step: "Warehouse API Check",
-          status: "success",
-          detail: `Warehouse '${warehouseName}' status: ${warehouseStatus} (Size: ${whData.cluster_size || "Auto"})`,
-        });
-      } else {
-        diagnostics.push({
-          step: "Warehouse API Check",
-          status: "warning",
-          detail: `Peringatan: API status warehouse mengembalikan HTTP ${whRes.status}. Melanjutkan uji SQL...`,
-        });
-      }
-    } catch (whErr) {
-      diagnostics.push({
-        step: "Warehouse API Check",
-        status: "warning",
-        detail: `Tidak dapat memverifikasi status warehouse: ${whErr instanceof Error ? whErr.message : "Error"}`,
-      });
-    }
-
-    // 3. Execute live test query via SQL Statements API
-    try {
-      const testSql = buildTestQuery();
-      const sqlResult = await runSql(testSql, { timeoutSecs: 45 });
-      diagnostics.push({
-        step: "SQL Statements API Test",
-        status: "success",
-        detail: `Query verifikasi berhasil dieksekusi dalam ${sqlResult.executionDurationMs}ms (Statement ID: ${sqlResult.statementId}).`,
-      });
-    } catch (sqlErr) {
-      const mapped = mapDatabricksError(sqlErr);
-      diagnostics.push({
-        step: "SQL Statements API Test",
-        status: "error",
-        detail: mapped.friendlyMessageId,
-      });
-      return {
-        success: false,
-        latencyMs: Date.now() - start,
-        warehouseStatus,
-        warehouseName,
-        message: mapped.friendlyMessageId,
-        diagnostics,
-        error: mapped.message,
-      };
-    }
-
-    // 4. List catalogs check
-    let catalogCount = 0;
-    try {
-      const catalogs = await listCatalogs();
-      catalogCount = catalogs.length;
-      diagnostics.push({
-        step: "Unity Catalog Verification",
-        status: "success",
-        detail: `Terdeteksi ${catalogCount} Unity Catalog pada workspace.`,
-      });
-    } catch (catErr) {
-      diagnostics.push({
-        step: "Unity Catalog Verification",
-        status: "warning",
-        detail: `Daftar katalog tidak dapat diambil: ${catErr instanceof Error ? catErr.message : "Error"}`,
-      });
-    }
-
-    const latencyMs = Date.now() - start;
-
-    return {
-      success: true,
-      latencyMs,
-      warehouseStatus: warehouseStatus || "RUNNING",
-      warehouseName,
-      catalogCount,
-      message:
-        "Koneksi ke Databricks Unity Catalog berhasil terverifikasi dan siap digunakan!",
-      diagnostics,
-    };
-  } catch (err) {
-    const mapped = mapDatabricksError(err);
+  } catch (tokenErr) {
+    const mapped = mapDatabricksError(tokenErr);
+    diagnostics.push({
+      step: "Token Autentikasi",
+      status: "error",
+      detail: mapped.friendlyMessageId,
+      action: "Masukkan Personal Access Token baru pada menu Pengaturan dan klik Simpan.",
+    });
     return {
       success: false,
       latencyMs: Date.now() - start,
+      failedStep: "token",
       message: mapped.friendlyMessageId,
+      suggestion: "Masukkan Personal Access Token baru pada menu Pengaturan.",
       diagnostics,
       error: mapped.message,
     };
   }
+
+  let whRes: Response;
+  try {
+    whRes = await fetch(
+      `${config.host}/api/2.0/sql/warehouses/${config.warehouseId}`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        signal: AbortSignal.timeout(15000),
+      }
+    );
+  } catch (netErr) {
+    const msg = netErr instanceof Error ? netErr.message : String(netErr);
+    diagnostics.push({
+      step: "Jangkauan URL Workspace",
+      status: "error",
+      detail: `Gagal menghubungi host '${config.host}': ${msg}`,
+      action: "Pastikan format URL Workspace benar (contoh: https://dbc-xxxx.cloud.databricks.com), koneksi internet aktif, dan tidak terhalang firewall/proxy.",
+    });
+    return {
+      success: false,
+      latencyMs: Date.now() - start,
+      failedStep: "url",
+      message: "URL Workspace tidak dapat dijangkau.",
+      suggestion: "Pastikan URL Workspace benar dan perangkat terhubung ke internet.",
+      diagnostics,
+      error: msg,
+    };
+  }
+
+  if (whRes.status === 401 || whRes.status === 403) {
+    diagnostics.push({
+      step: "Validasi Token",
+      status: "error",
+      detail: `Autentikasi ditolak oleh Databricks (HTTP ${whRes.status}).`,
+      action: "Buka Databricks > User Settings > Developer > Access Tokens, buat token baru, lalu perbarui token di halaman Pengaturan.",
+    });
+    return {
+      success: false,
+      latencyMs: Date.now() - start,
+      failedStep: "token",
+      message: "Personal Access Token tidak valid atau kedaluwarsa.",
+      suggestion: "Buat token baru di menu Pengaturan Databricks lalu simpan token baru di halaman Pengaturan.",
+      diagnostics,
+      error: "Invalid access token",
+    };
+  }
+
+  if (whRes.status === 404) {
+    diagnostics.push({
+      step: "Validasi SQL Warehouse",
+      status: "error",
+      detail: `SQL Warehouse dengan ID '${config.warehouseId}' tidak ditemukan pada workspace ini.`,
+      action: "Buka menu SQL Warehouses di workspace Databricks Anda dan salin Warehouse ID yang benar dari tab Connection Details.",
+    });
+    return {
+      success: false,
+      latencyMs: Date.now() - start,
+      failedStep: "warehouse",
+      message: "SQL Warehouse ID tidak ditemukan.",
+      suggestion: "Periksa kembali SQL Warehouse ID pada konsol Databricks Anda.",
+      diagnostics,
+      error: "Warehouse not found",
+    };
+  }
+
+  let warehouseStatus: ConnectionTestResult["warehouseStatus"] = "UNKNOWN";
+  let warehouseName = config.warehouseId;
+
+  if (whRes.ok) {
+    try {
+      const whData = await whRes.json();
+      warehouseStatus = whData.state;
+      warehouseName = whData.name || config.warehouseId;
+
+      if (warehouseStatus === "STOPPED") {
+        diagnostics.push({
+          step: "Status SQL Warehouse",
+          status: "error",
+          detail: `SQL Warehouse '${warehouseName}' saat ini berhenti (STOPPED).`,
+          action: "Mulai (Start) SQL Warehouse di konsol Databricks Anda agar query dapat diproses.",
+        });
+        return {
+          success: false,
+          latencyMs: Date.now() - start,
+          failedStep: "warehouse",
+          warehouseStatus: "STOPPED",
+          warehouseName,
+          message: "SQL Warehouse sedang berhenti (STOPPED).",
+          suggestion: "Buka konsol Databricks dan klik tombol 'Start' pada SQL Warehouse Anda.",
+          diagnostics,
+          error: "Warehouse stopped",
+        };
+      }
+
+      if (warehouseStatus === "STARTING") {
+        diagnostics.push({
+          step: "Status SQL Warehouse",
+          status: "warning",
+          detail: `SQL Warehouse '${warehouseName}' sedang menyala (STARTING).`,
+          action: "Tunggu 1-2 menit hingga status berubah menjadi RUNNING lalu lakukan tes kembali.",
+        });
+      } else {
+        diagnostics.push({
+          step: "Status SQL Warehouse",
+          status: "success",
+          detail: `Warehouse '${warehouseName}' aktif (${warehouseStatus}).`,
+        });
+      }
+    } catch {}
+  }
+
+  try {
+    const testSql = buildTestQuery();
+    const sqlResult = await runSql(testSql, { timeoutSecs: 45 });
+    diagnostics.push({
+      step: "Eksekusi Query Verifikasi",
+      status: "success",
+      detail: `Query berhasil dieksekusi dalam ${sqlResult.executionDurationMs}ms (Statement ID: ${sqlResult.statementId}).`,
+    });
+  } catch (sqlErr) {
+    const mapped = mapDatabricksError(sqlErr);
+    const isPerm = mapped.code === "ERR_PERMISSION_DENIED";
+    diagnostics.push({
+      step: "Eksekusi Query Verifikasi",
+      status: "error",
+      detail: mapped.friendlyMessageId,
+      action: isPerm
+        ? "Berikan hak 'Can Use' pada SQL Warehouse kepada akun Anda di Databricks."
+        : "Periksa log SQL Warehouse pada Databricks console.",
+    });
+    return {
+      success: false,
+      latencyMs: Date.now() - start,
+      failedStep: isPerm ? "permission" : "warehouse",
+      warehouseStatus,
+      warehouseName,
+      message: mapped.friendlyMessageId,
+      suggestion: mapped.suggestion,
+      diagnostics,
+      error: mapped.message,
+    };
+  }
+
+  let catalogCount = 0;
+  try {
+    const catalogs = await listCatalogs();
+    catalogCount = catalogs.length;
+    diagnostics.push({
+      step: "Pemeriksaan Unity Catalog",
+      status: "success",
+      detail: `Terdeteksi ${catalogCount} Unity Catalog pada workspace.`,
+    });
+
+    if (config.defaultCatalog) {
+      const schemas = await listSchemas(config.defaultCatalog);
+      diagnostics.push({
+        step: "Pemeriksaan Skema Default",
+        status: "success",
+        detail: `Katalog '${config.defaultCatalog}' dapat diakses (${schemas.length} skema).`,
+      });
+
+      if (config.defaultSchema) {
+        const schemaFound = schemas.some(
+          (s) => s.name.toLowerCase() === config.defaultSchema.toLowerCase()
+        );
+        if (!schemaFound) {
+          diagnostics.push({
+            step: "Pemeriksaan Skema Default",
+            status: "error",
+            detail: `Skema '${config.defaultSchema}' tidak ditemukan pada katalog '${config.defaultCatalog}'.`,
+            action: `Buat skema dengan perintah: CREATE SCHEMA IF NOT EXISTS \`${config.defaultCatalog}\`.\`${config.defaultSchema}\`;`,
+          });
+          return {
+            success: false,
+            latencyMs: Date.now() - start,
+            failedStep: "target",
+            warehouseStatus: warehouseStatus || "RUNNING",
+            warehouseName,
+            message: `Skema '${config.defaultSchema}' tidak ditemukan.`,
+            suggestion: `Buat skema '${config.defaultSchema}' di katalog '${config.defaultCatalog}' atau pilih dari skema yang tersedia.`,
+            diagnostics,
+            error: "Schema missing",
+          };
+        }
+
+        if (config.defaultVolume) {
+          try {
+            const volumes = await listVolumes(config.defaultCatalog, config.defaultSchema);
+            const volumeFound = volumes.some(
+              (v) => v.name.toLowerCase() === config.defaultVolume.toLowerCase()
+            );
+            if (!volumeFound) {
+              diagnostics.push({
+                step: "Pemeriksaan Volume Default",
+                status: "error",
+                detail: `Volume '${config.defaultVolume}' tidak ditemukan pada skema '${config.defaultCatalog}.${config.defaultSchema}'.`,
+                action: `Buat volume dengan perintah: CREATE VOLUME IF NOT EXISTS \`${config.defaultCatalog}\`.\`${config.defaultSchema}\`.\`${config.defaultVolume}\`;`,
+              });
+              return {
+                success: false,
+                latencyMs: Date.now() - start,
+                failedStep: "target",
+                warehouseStatus: warehouseStatus || "RUNNING",
+                warehouseName,
+                message: `Volume '${config.defaultVolume}' tidak ditemukan.`,
+                suggestion: `Buat volume '${config.defaultVolume}' untuk menampung berkas unggahan atau pilih volume yang sudah ada.`,
+                diagnostics,
+                error: "Volume missing",
+              };
+            }
+
+            diagnostics.push({
+              step: "Pemeriksaan Volume Default",
+              status: "success",
+              detail: `Volume '${config.defaultCatalog}.${config.defaultSchema}.${config.defaultVolume}' siap digunakan.`,
+            });
+          } catch (volErr) {
+            diagnostics.push({
+              step: "Pemeriksaan Volume Default",
+              status: "warning",
+              detail: `Pemeriksaan volume dilewati: ${volErr instanceof Error ? volErr.message : "Peringatan"}`,
+            });
+          }
+        }
+      }
+    }
+  } catch (catErr) {
+    const catMapped = mapDatabricksError(catErr);
+    diagnostics.push({
+      step: "Pemeriksaan Katalog",
+      status: "error",
+      detail: `Katalog '${config.defaultCatalog}' gagal diakses: ${catMapped.friendlyMessageId}`,
+      action: `Pastikan nama katalog sesuai dan berikan hak: GRANT USE CATALOG ON CATALOG \`${config.defaultCatalog}\` TO \`user\`;`,
+    });
+    return {
+      success: false,
+      latencyMs: Date.now() - start,
+      failedStep: "target",
+      warehouseStatus: warehouseStatus || "RUNNING",
+      warehouseName,
+      message: `Katalog '${config.defaultCatalog}' tidak dapat diakses.`,
+      suggestion: "Pastikan nama katalog sesuai dan akun memiliki izin USE CATALOG.",
+      diagnostics,
+      error: catMapped.message,
+    };
+  }
+
+  const latencyMs = Date.now() - start;
+
+  return {
+    success: true,
+    latencyMs,
+    warehouseStatus: warehouseStatus || "RUNNING",
+    warehouseName,
+    catalogCount,
+    message: "Koneksi ke Databricks Unity Catalog berhasil terverifikasi dan siap digunakan!",
+    diagnostics,
+  };
 }
 
-/**
- * Lists all catalogs in Unity Catalog.
- */
 export async function listCatalogs(): Promise<CatalogItem[]> {
   const query = buildListCatalogsQuery();
   const res = await runSql(query);
@@ -355,9 +512,6 @@ export async function listCatalogs(): Promise<CatalogItem[]> {
     .filter((c) => !!c.name);
 }
 
-/**
-Lists *  schemas in a given catalog.
- */
 export async function listSchemas(catalog: string): Promise<SchemaItem[]> {
   const query = buildListSchemasQuery(catalog);
   const res = await runSql(query);
@@ -376,9 +530,6 @@ export async function listSchemas(catalog: string): Promise<SchemaItem[]> {
     .filter((s) => !!s.name);
 }
 
-/**
- * Lists tables in a given catalog and schema.
- */
 export async function listTables(
   catalog: string,
   schema: string,
@@ -396,11 +547,26 @@ export async function listTables(
     .filter((t) => !!t.name);
 }
 
-/**
- * Streams a file directly to Databricks Unity Catalog Volume via the Files API.
- * NEVER loads the whole CSV into server memory.
- * Uses HTTP PUT with stream body and duplex: 'half'.
- */
+export async function listVolumes(
+  catalog: string,
+  schema: string
+): Promise<Array<{ name: string; catalog: string; schema: string }>> {
+  const query = buildListVolumesQuery(catalog, schema);
+  const res = await runSql(query);
+  return res.rows
+    .map((row) => {
+      const name = String(
+        row.volumeName ||
+          row.volume_name ||
+          row.volume ||
+          Object.values(row)[0] ||
+          ""
+      );
+      return { name, catalog, schema };
+    })
+    .filter((v) => !!v.name);
+}
+
 export async function uploadToVolume(
   stream: ReadableStream | NodeJS.ReadableStream | ReadableStream<Uint8Array>,
   filename: string,
@@ -426,7 +592,6 @@ export async function uploadToVolume(
   const uploadUrl = `${config.host}/api/2.0/fs/files${volumeFilePath}?overwrite=true`;
 
   try {
-    // Stream directly to Databricks Files API
     const response = await fetch(uploadUrl, {
       method: "PUT",
       headers: {
@@ -434,8 +599,7 @@ export async function uploadToVolume(
         "Content-Type": "application/octet-stream",
       },
       body: stream as unknown as BodyInit,
-      // @ts-expect-error duplex is required in Node.js fetch when streaming body
-      duplex: "half",
+      ...({ duplex: "half" } as Record<string, unknown>),
     });
 
     if (!response.ok) {
@@ -455,6 +619,192 @@ export async function uploadToVolume(
       volume,
       uploadedAt: new Date().toISOString(),
       status: "uploaded",
+    };
+  } catch (err) {
+    throw mapDatabricksError(err);
+  }
+}
+
+export async function fetchVolumeFileChunk(
+  volumeFilePath: string,
+  maxBytes = 65536
+): Promise<Buffer> {
+  if (
+    volumeFilePath.startsWith("sample:") ||
+    volumeFilePath.startsWith("/samples/") ||
+    volumeFilePath.includes("samples/")
+  ) {
+    const cleanPath = volumeFilePath.replace(/^sample:/, "").replace(/^\//, "");
+    const localFile = path.isAbsolute(cleanPath)
+      ? cleanPath
+      : path.join(process.cwd(), cleanPath);
+
+    if (fs.existsSync(localFile)) {
+      const fd = fs.openSync(localFile, "r");
+      const buffer = Buffer.alloc(maxBytes);
+      const bytesRead = fs.readSync(fd, buffer, 0, maxBytes, 0);
+      fs.closeSync(fd);
+      return buffer.subarray(0, bytesRead);
+    }
+  }
+
+  const config = getDatabricksConfig();
+  const token = await getDatabricksBearerToken();
+  const url = `${config.host}/api/2.0/fs/files${volumeFilePath}`;
+
+  try {
+    const response = await fetch(url, {
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        Range: `bytes=0-${maxBytes - 1}`,
+      },
+    });
+
+    if (!response.ok) {
+      const errText = await response.text();
+      throw mapDatabricksError(
+        new Error(
+          `Failed to fetch file chunk from volume (${response.status}): ${errText}`
+        )
+      );
+    }
+
+    if (!response.body) {
+      throw new Error("Response body is null");
+    }
+
+    const reader = response.body.getReader();
+    const chunks: Uint8Array[] = [];
+    let totalBytes = 0;
+
+    try {
+      while (totalBytes < maxBytes) {
+        const { done, value } = await reader.read();
+        if (done || !value) break;
+
+        const remaining = maxBytes - totalBytes;
+        if (value.length > remaining) {
+          chunks.push(value.subarray(0, remaining));
+          totalBytes += remaining;
+          break;
+        } else {
+          chunks.push(value);
+          totalBytes += value.length;
+        }
+      }
+    } finally {
+      reader.cancel().catch(() => {});
+    }
+
+    return Buffer.concat(chunks);
+  } catch (err) {
+    throw mapDatabricksError(err);
+  }
+}
+
+export interface AsyncStatementSubmission {
+  statementId: string;
+  state: "PENDING" | "RUNNING" | "SUCCEEDED" | "FAILED" | "CANCELED" | "CLOSED";
+}
+
+export interface StatementPollResult {
+  statementId: string;
+  state: "PENDING" | "RUNNING" | "SUCCEEDED" | "FAILED" | "CANCELED" | "CLOSED";
+  rowCount?: number;
+  errorMessage?: string;
+  isComplete: boolean;
+  isSuccess: boolean;
+}
+
+export async function submitSqlStatementAsync(
+  query: string
+): Promise<AsyncStatementSubmission> {
+  const config = getDatabricksConfig();
+  if (!config.host || !config.warehouseId) {
+    throw new DatabricksError({
+      code: "ERR_AUTH_FAILED",
+      message: "Databricks host or warehouse ID is not configured.",
+      friendlyMessageId:
+        "Host Databricks atau ID SQL Warehouse belum dikonfigurasi.",
+      friendlyMessageEn:
+        "Databricks host or SQL Warehouse ID is not configured.",
+      statusCode: 500,
+    });
+  }
+
+  const token = await getDatabricksBearerToken();
+
+  try {
+    const postRes = await fetch(`${config.host}/api/2.0/sql/statements`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        warehouse_id: config.warehouseId,
+        statement: query,
+        wait_timeout: "0s",
+        on_wait_timeout: "CONTINUE",
+        format: "JSON_ARRAY",
+      }),
+    });
+
+    if (!postRes.ok) {
+      const errText = await postRes.text();
+      throw mapDatabricksError(
+        new Error(`SQL submission failed (${postRes.status}): ${errText}`)
+      );
+    }
+
+    const data = (await postRes.json()) as DatabricksStatementApiResult;
+    return {
+      statementId: data.statement_id,
+      state: data.status.state,
+    };
+  } catch (err) {
+    throw mapDatabricksError(err);
+  }
+}
+
+export async function pollSqlStatementStatus(
+  statementId: string
+): Promise<StatementPollResult> {
+  const config = getDatabricksConfig();
+  const token = await getDatabricksBearerToken();
+
+  try {
+    const pollRes = await fetch(
+      `${config.host}/api/2.0/sql/statements/${statementId}`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+
+    if (!pollRes.ok) {
+      const pollErr = await pollRes.text();
+      throw mapDatabricksError(
+        new Error(`SQL polling failed (${pollRes.status}): ${pollErr}`)
+      );
+    }
+
+    const data = (await pollRes.json()) as DatabricksStatementApiResult;
+    const state = data.status.state;
+
+    return {
+      statementId,
+      state,
+      rowCount: data.result?.row_count ?? data.manifest?.total_row_count ?? 0,
+      errorMessage: data.status.error?.message,
+      isComplete:
+        state === "SUCCEEDED" ||
+        state === "FAILED" ||
+        state === "CANCELED" ||
+        state === "CLOSED",
+      isSuccess: state === "SUCCEEDED",
     };
   } catch (err) {
     throw mapDatabricksError(err);

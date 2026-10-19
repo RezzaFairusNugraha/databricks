@@ -1,0 +1,14 @@
+Exported from Global ERP Platform
+Report Type: International Orders Export
+
+order_id,customer_name,destination_city,item_count,unit_price,total_amount,is_express,order_date,status,,
+ORD-901,François Dupont,Montréal,2,125.50,251.00,1,2024-03-15,delivered,,
+ORD-902,Hans Müller,München,1,89.00,89.00,0,2024-03-16,delivered,,
+ORD-903,Lucía Gómez,Bogotá,5,45.20,226.00,true,2024-03-16,processing,,
+ORD-904,José Silva,São Paulo,3,110.00,330.00,false,2024-03-17,shipped,,
+ORD-905,Renée Laroche,Paris,1,299.99,299.99,1,2024-03-18,cancelled,,
+ORD-906,Krzysztof Nowak,Warszawa,4,35.00,140.00,0,2024-03-19,delivered,,
+ORD-907,Zoë Martin,Zürich,2,150.00,300.00,true,2024-03-20,delivered,,
+,,,,,,,,,,
+Jumlah Pesanan: 7,,,,,,,,,,
+Total Pendapatan: 1636.19,,,,,,,,,,
